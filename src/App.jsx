@@ -377,11 +377,49 @@ function App() {
 
               {/* Detail laporan */}
               {activeReport !== null && reports[activeReport] && (
-                <div className="mt-6 p-4 bg-white dark:bg-gray-800 shadow rounded-lg">
-                  <h2 className="text-lg font-semibold mb-3">📄 Detail Laporan</h2>
-                  <pre className="text-sm whitespace-pre-wrap">
-                    {JSON.stringify(reports[activeReport], null, 2)}
-                  </pre>
+                <div className="mt-6 bg-white dark:bg-gray-800 shadow rounded-2xl p-5">
+                  <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    📄 Detail Laporan
+                  </h2>
+
+                  <div className="grid grid-cols-2 gap-y-3 text-sm">
+                    {[
+                      { label: "Nama", value: reports[activeReport].nama },
+                      { label: "Tanggal", value: reports[activeReport].tanggal },
+                      { label: "Agenda", value: reports[activeReport].agenda },
+                      { label: "Pekerjaan", value: reports[activeReport].pekerjaan },
+                      { label: "Plan", value: reports[activeReport].plan },
+                      { label: "Aktual", value: reports[activeReport].aktual },
+                      { label: "Status", value: reports[activeReport].status },
+                      {
+                        label: "Evidence",
+                        value: reports[activeReport].evidence ? (
+                          <a
+                            href={reports[activeReport].evidence.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-500 hover:underline"
+                          >
+                            {reports[activeReport].evidence.name}
+                          </a>
+                        ) : (
+                          "-"
+                        ),
+                      },
+                    ].map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="flex justify-between border-b border-gray-200 dark:border-gray-700 pb-2"
+                      >
+                        <span className="font-medium text-gray-600 dark:text-gray-300">
+                          {item.label}
+                        </span>
+                        <span className="text-gray-800 dark:text-gray-100">
+                          {item.value || "-"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </>
@@ -401,53 +439,5 @@ function App() {
     </div>
   )
 }
-
-{activeReport !== null && reports[activeReport] && (
-  <div className="mt-6 p-4 bg-white dark:bg-gray-800 shadow rounded-lg">
-    <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-      📄 Detail Laporan
-    </h2>
-
-    <div className="grid grid-cols-2 gap-y-3 text-sm">
-      <div className="font-medium text-gray-600 dark:text-gray-300">Nama</div>
-      <div>{reports[activeReport].nama || "-"}</div>
-
-      <div className="font-medium text-gray-600 dark:text-gray-300">Tanggal</div>
-      <div>{reports[activeReport].tanggal || "-"}</div>
-
-      <div className="font-medium text-gray-600 dark:text-gray-300">Agenda</div>
-      <div>{reports[activeReport].agenda || "-"}</div>
-
-      <div className="font-medium text-gray-600 dark:text-gray-300">Pekerjaan</div>
-      <div>{reports[activeReport].pekerjaan || "-"}</div>
-
-      <div className="font-medium text-gray-600 dark:text-gray-300">Plan</div>
-      <div>{reports[activeReport].plan || "-"}</div>
-
-      <div className="font-medium text-gray-600 dark:text-gray-300">Aktual</div>
-      <div>{reports[activeReport].aktual || "-"}</div>
-
-      <div className="font-medium text-gray-600 dark:text-gray-300">Status</div>
-      <div>{reports[activeReport].status || "-"}</div>
-
-      <div className="font-medium text-gray-600 dark:text-gray-300">Evidence</div>
-      <div>
-        {reports[activeReport].evidence ? (
-          <a
-            href={reports[activeReport].evidence.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-500 hover:underline"
-          >
-            Lihat File
-          </a>
-        ) : (
-          "-"
-        )}
-      </div>
-    </div>
-  </div>
-)}
-
 
 export default App
