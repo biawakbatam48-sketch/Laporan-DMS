@@ -7,16 +7,14 @@ function App() {
   const [darkMode, setDarkMode] = useState(false)
   const [reports, setReports] = useState([])
   const [activeReport, setActiveReport] = useState(null)
-  const [activePage, setActivePage] = useState("dashboard") // halaman aktif
+  const [activePage, setActivePage] = useState("dashboard")
 
-  // Handle perubahan input teks
   const handleChange = (index, field, value) => {
     const newReports = [...reports]
     newReports[index][field] = value
     setReports(newReports)
   }
 
-  // Handle upload file
   const handleFileChange = (index, file) => {
     if (file) {
       const fileURL = URL.createObjectURL(file)
@@ -26,7 +24,6 @@ function App() {
     }
   }
 
-  // Tambah baris baru
   const addRow = () => {
     setReports([
       ...reports,
@@ -43,15 +40,13 @@ function App() {
     ])
   }
 
-  // Hapus baris
   const deleteRow = (index) => {
     const newReports = [...reports]
     newReports.splice(index, 1)
     setReports(newReports)
-    if (activeReport === index) setActiveReport(null) // reset detail kalau laporan dihapus
+    if (activeReport === index) setActiveReport(null)
   }
 
-  // Export Excel
   const exportToExcel = async () => {
     const workbook = new ExcelJS.Workbook()
     const worksheet = workbook.addWorksheet("Laporan")
@@ -149,7 +144,6 @@ function App() {
               🏠 Dashboard
             </li>
 
-            {/* Laporan */}
             <li>
               <div
                 className={`cursor-pointer hover:text-yellow-300 mb-2 ${
@@ -169,9 +163,7 @@ function App() {
                         key={i}
                         onClick={() => setActiveReport(i)}
                         className={`truncate cursor-pointer hover:text-yellow-300 ${
-                          activeReport === i
-                            ? "font-bold text-yellow-300"
-                            : ""
+                          activeReport === i ? "font-bold text-yellow-300" : ""
                         }`}
                       >
                         📄 {r.nama || `Laporan ${i + 1}`}
@@ -197,9 +189,7 @@ function App() {
         <div className="flex-1 p-6">
           {/* Navbar */}
           <div className="flex justify-between items-center mb-6 bg-white dark:bg-gray-800 shadow rounded-lg px-6 py-3">
-            <h1 className="text-xl font-semibold capitalize">
-              📌 {activePage}
-            </h1>
+            <h1 className="text-xl font-semibold capitalize">📌 {activePage}</h1>
             <button
               onClick={() => setDarkMode(!darkMode)}
               className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:scale-105 transition"
@@ -338,7 +328,6 @@ function App() {
                           </select>
                         </td>
                         <td className="px-4 py-2">
-                          {/* Custom file input */}
                           <label className="block w-56 px-3 py-2 text-sm text-gray-700 bg-gray-100 rounded cursor-pointer dark:bg-gray-700 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600 transition">
                             Pilih File
                             <input
@@ -377,12 +366,12 @@ function App() {
 
               {/* Detail laporan */}
               {activeReport !== null && reports[activeReport] && (
-                <div className="mt-6 bg-white dark:bg-gray-800 shadow rounded-2xl p-5">
+                <div className="mt-6">
                   <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                     📄 Detail Laporan
                   </h2>
 
-                  <div className="grid grid-cols-2 gap-y-3 text-sm">
+                  <div className="bg-white dark:bg-gray-800 shadow rounded-2xl p-5 divide-y divide-gray-200 dark:divide-gray-700">
                     {[
                       { label: "Nama", value: reports[activeReport].nama },
                       { label: "Tanggal", value: reports[activeReport].tanggal },
@@ -409,12 +398,18 @@ function App() {
                     ].map((item, idx) => (
                       <div
                         key={idx}
-                        className="flex justify-between border-b border-gray-200 dark:border-gray-700 pb-2"
+                        className="grid grid-cols-3 gap-4 py-2"
                       >
                         <span className="font-medium text-gray-600 dark:text-gray-300">
                           {item.label}
                         </span>
-                        <span className="text-gray-800 dark:text-gray-100">
+                        <span
+                          className={`col-span-2 text-right ${
+                            !item.value || item.value === "-"
+                              ? "text-gray-400 italic"
+                              : "text-gray-800 dark:text-gray-100"
+                          }`}
+                        >
                           {item.value || "-"}
                         </span>
                       </div>
