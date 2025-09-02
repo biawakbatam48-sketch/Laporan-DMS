@@ -1,6 +1,6 @@
-import { useState } from "react";
-import ExcelJS from "exceljs";
-import { saveAs } from "file-saver";
+import { useState } from "react"
+import ExcelJS from "exceljs"
+import { saveAs } from "file-saver"
 import {
   Plus,
   FileSpreadsheet,
@@ -9,33 +9,30 @@ import {
   Sun,
   ChevronDown,
   ChevronUp,
-} from "lucide-react";
+} from "lucide-react"
 
 function App() {
-  const [darkMode, setDarkMode] = useState(false);
-  const [reports, setReports] = useState([]);
-  const [activeReport, setActiveReport] = useState(null);
-  const [activePage, setActivePage] = useState("dashboard");
-  const [showForm, setShowForm] = useState(true);
-  const [showDetail, setShowDetail] = useState(true);
+  const [darkMode, setDarkMode] = useState(false)
+  const [reports, setReports] = useState([])
+  const [activeReport, setActiveReport] = useState(null)
+  const [activePage, setActivePage] = useState("dashboard")
+  const [showForm, setShowForm] = useState(true)
+  const [showDetail, setShowDetail] = useState(true)
 
-  const [user, setUser] = useState(null); // user login state
-
-  // --------- LAPORAN HANDLER ---------
   const handleChange = (index, field, value) => {
-    const newReports = [...reports];
-    newReports[index][field] = value;
-    setReports(newReports);
-  };
+    const newReports = [...reports]
+    newReports[index][field] = value
+    setReports(newReports)
+  }
 
   const handleFileChange = (index, file) => {
     if (file) {
-      const fileURL = URL.createObjectURL(file);
-      const newReports = [...reports];
-      newReports[index].evidence = { name: file.name, url: fileURL };
-      setReports(newReports);
+      const fileURL = URL.createObjectURL(file)
+      const newReports = [...reports]
+      newReports[index].evidence = { name: file.name, url: fileURL }
+      setReports(newReports)
     }
-  };
+  }
 
   const addRow = () => {
     setReports([
@@ -50,19 +47,19 @@ function App() {
         status: "",
         evidence: null,
       },
-    ]);
-  };
+    ])
+  }
 
   const deleteRow = (index) => {
-    const newReports = [...reports];
-    newReports.splice(index, 1);
-    setReports(newReports);
-    if (activeReport === index) setActiveReport(null);
-  };
+    const newReports = [...reports]
+    newReports.splice(index, 1)
+    setReports(newReports)
+    if (activeReport === index) setActiveReport(null)
+  }
 
   const exportToExcel = async () => {
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet("Laporan");
+    const workbook = new ExcelJS.Workbook()
+    const worksheet = workbook.addWorksheet("Laporan")
 
     worksheet.addRow([
       "Nama",
@@ -73,7 +70,7 @@ function App() {
       "Aktual",
       "Status",
       "Evidence",
-    ]);
+    ])
 
     reports.forEach((r) => {
       const row = worksheet.addRow([
@@ -85,41 +82,41 @@ function App() {
         r.aktual,
         r.status,
         r.evidence ? r.evidence.name : "",
-      ]);
+      ])
       if (r.evidence) {
-        const cell = row.getCell(8);
-        cell.value = { text: r.evidence.name, hyperlink: r.evidence.url };
-        cell.font = { color: { argb: "FF0000FF" }, underline: true };
+        const cell = row.getCell(8)
+        cell.value = { text: r.evidence.name, hyperlink: r.evidence.url }
+        cell.font = { color: { argb: "FF0000FF" }, underline: true }
       }
-    });
+    })
 
     worksheet.getRow(1).eachCell((cell) => {
-      cell.font = { bold: true };
-      cell.alignment = { horizontal: "center", vertical: "middle" };
+      cell.font = { bold: true }
+      cell.alignment = { horizontal: "center", vertical: "middle" }
       cell.fill = {
         type: "pattern",
         pattern: "solid",
         fgColor: { argb: "FFD9D9D9" },
-      };
+      }
       cell.border = {
         top: { style: "thin" },
         left: { style: "thin" },
         bottom: { style: "thin" },
         right: { style: "thin" },
-      };
-    });
+      }
+    })
 
     worksheet.eachRow((row) => {
       row.eachCell((cell) => {
-        cell.alignment = { horizontal: "center", vertical: "middle" };
+        cell.alignment = { horizontal: "center", vertical: "middle" }
         cell.border = {
           top: { style: "thin" },
           left: { style: "thin" },
           bottom: { style: "thin" },
           right: { style: "thin" },
-        };
-      });
-    });
+        }
+      })
+    })
 
     worksheet.columns = [
       { width: 30 },
@@ -130,41 +127,12 @@ function App() {
       { width: 20 },
       { width: 15 },
       { width: 40 },
-    ];
+    ]
 
-    const buf = await workbook.xlsx.writeBuffer();
-    saveAs(new Blob([buf]), "Laporan Harian CV Rangga.xlsx");
-  };
-
-  // --------- LOGOUT HANDLER ---------
-  const handleLogout = () => setUser(null);
-
-  // ---------- RENDER ----------
-  if (!user) {
-    // Tampilkan login/register kalau belum login
-    return (
-      <div className={darkMode ? "dark" : ""}>
-        <div className="min-h-screen flex justify-center items-center bg-gray-100 dark:bg-gray-900">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded shadow w-96">
-            <h1 className="text-2xl font-bold mb-4 text-center">Laporan DMS</h1>
-            <Login onLogin={setUser} />
-            <div className="my-4 border-t border-gray-300 dark:border-gray-600"></div>
-            <Register />
-            <div className="mt-4 text-center">
-              <button
-                onClick={() => setDarkMode(!darkMode)}
-                className="p-2 bg-gray-200 dark:bg-gray-700 rounded"
-              >
-                {darkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    const buf = await workbook.xlsx.writeBuffer()
+    saveAs(new Blob([buf]), "Laporan Harian CV Rangga.xlsx")
   }
 
-  // Jika sudah login, tampilkan dashboard/laporan
   return (
     <div className={darkMode ? "dark" : ""}>
       <div className="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen flex">
@@ -172,7 +140,9 @@ function App() {
         <aside className="w-72 bg-gradient-to-b from-blue-700 to-blue-500 dark:from-gray-800 dark:to-gray-800 text-white p-6 shadow-lg">
           <h2 className="text-2xl font-bold mb-8 leading-snug">
             ALL TEAM <br />
-            <span className="text-sm font-medium">Laporan Harian CV RANGGA</span>
+            <span className="text-sm font-medium">
+              Laporan Harian CV RANGGA
+            </span>
           </h2>
           <ul className="space-y-4">
             <li
@@ -183,6 +153,7 @@ function App() {
             >
               🏠 Dashboard
             </li>
+
             <li>
               <div
                 className={`cursor-pointer hover:text-yellow-300 mb-2 ${
@@ -213,6 +184,7 @@ function App() {
                 </ul>
               )}
             </li>
+
             <li
               className={`cursor-pointer hover:text-yellow-300 ${
                 activePage === "pengaturan" ? "font-bold text-yellow-300" : ""
@@ -220,9 +192,6 @@ function App() {
               onClick={() => setActivePage("pengaturan")}
             >
               ⚙️ Pengaturan
-            </li>
-            <li className="cursor-pointer hover:text-red-400 mt-4" onClick={handleLogout}>
-              🔒 Logout ({user.username})
             </li>
           </ul>
         </aside>
@@ -245,7 +214,7 @@ function App() {
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
               <h2 className="text-lg font-semibold mb-3">📊 Dashboard</h2>
               <p className="text-gray-600 dark:text-gray-300">
-                Selamat datang, <strong>{user.username}</strong>. Silakan pilih menu di sidebar.
+                Selamat datang di sistem laporan. Silakan pilih menu di sidebar.
               </p>
             </div>
           )}
@@ -279,62 +248,83 @@ function App() {
                       </button>
                     </div>
 
-                    {/* Tabel laporan */}
+                    {/* Tabel diubah ke grid form */}
                     {reports.map((r, index) => (
                       <div
                         key={index}
                         className="grid grid-cols-2 gap-6 p-4 border rounded-lg mb-4 dark:border-gray-700 bg-gray-50 dark:bg-gray-700"
                       >
+                        {/* Kolom Kiri */}
                         <div>
                           <label className="block mb-1">Nama</label>
                           <input
                             type="text"
                             value={r.nama}
-                            onChange={(e) => handleChange(index, "nama", e.target.value)}
+                            onChange={(e) =>
+                              handleChange(index, "nama", e.target.value)
+                            }
                             className="w-full p-2 border rounded bg-white dark:bg-gray-800"
                           />
+
                           <label className="block mt-3 mb-1">Tanggal</label>
                           <input
                             type="date"
                             value={r.tanggal}
-                            onChange={(e) => handleChange(index, "tanggal", e.target.value)}
+                            onChange={(e) =>
+                              handleChange(index, "tanggal", e.target.value)
+                            }
                             className="w-full p-2 border rounded bg-white dark:bg-gray-800"
                           />
+
                           <label className="block mt-3 mb-1">Agenda</label>
                           <input
                             type="text"
                             value={r.agenda}
-                            onChange={(e) => handleChange(index, "agenda", e.target.value)}
+                            onChange={(e) =>
+                              handleChange(index, "agenda", e.target.value)
+                            }
                             className="w-full p-2 border rounded bg-white dark:bg-gray-800"
                           />
+
                           <label className="block mt-3 mb-1">Pekerjaan</label>
                           <input
                             type="text"
                             value={r.pekerjaan}
-                            onChange={(e) => handleChange(index, "pekerjaan", e.target.value)}
+                            onChange={(e) =>
+                              handleChange(index, "pekerjaan", e.target.value)
+                            }
                             className="w-full p-2 border rounded bg-white dark:bg-gray-800"
                           />
                         </div>
 
+                        {/* Kolom Kanan */}
                         <div>
                           <label className="block mb-1">Plan</label>
                           <input
                             type="text"
                             value={r.plan}
-                            onChange={(e) => handleChange(index, "plan", e.target.value)}
+                            onChange={(e) =>
+                              handleChange(index, "plan", e.target.value)
+                            }
                             className="w-full p-2 border rounded bg-white dark:bg-gray-800"
                           />
+
                           <label className="block mt-3 mb-1">Aktual</label>
                           <input
                             type="text"
                             value={r.aktual}
-                            onChange={(e) => handleChange(index, "aktual", e.target.value)}
+                            onChange={(e) =>
+                              handleChange(index, "aktual", e.target.value)
+                            }
                             className="w-full p-2 border rounded bg-white dark:bg-gray-800"
                           />
+
                           <label className="block mt-3 mb-1">Status</label>
                           <select
                             value={r.status}
-                            onChange={(e) => handleChange(index, "status", e.target.value)}
+                            onChange={(e) =>
+                              handleChange(index, "status", e.target.value)
+                            }
                             className="w-full p-2 border rounded bg-white dark:bg-gray-800"
                           >
                             <option value="">Pilih</option>
@@ -342,11 +332,14 @@ function App() {
                             <option value="Progress">Progress</option>
                             <option value="Pending">Pending</option>
                           </select>
+
                           <label className="block mt-3 mb-1">Evidence</label>
                           <input
                             type="file"
                             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                            onChange={(e) => handleFileChange(index, e.target.files[0])}
+                            onChange={(e) =>
+                              handleFileChange(index, e.target.files[0])
+                            }
                             className="w-full text-sm"
                           />
                           {r.evidence && (
@@ -448,7 +441,7 @@ function App() {
         </div>
       </div>
     </div>
-  );
+  )
 }
 
-export default App;
+export default App
