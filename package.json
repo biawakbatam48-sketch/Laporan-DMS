@@ -3,16 +3,17 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-  "dev": "vite",
-  "build": "npx vite build",
-  "preview": "vite preview",
-  "postinstall": "chmod +x node_modules/.bin/vite || true"
+    "dev": "vite",
+    "build": "npx vite build",
+    "preview": "vite preview",
+    "postinstall": "chmod +x node_modules/.bin/vite || true"
   },
   "dependencies": {
     "framer-motion": "^11.0.0",
     "lucide-react": "^0.446.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.2.0",
