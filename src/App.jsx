@@ -2,27 +2,16 @@ import { useState } from "react"
 import ExcelJS from "exceljs"
 import { saveAs } from "file-saver"
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts"
-import { Plus, FileSpreadsheet, Moon, Sun, Upload } from "lucide-react"
+import { Plus, FileSpreadsheet, Moon, Sun } from "lucide-react"
 
 function App() {
   const [darkMode, setDarkMode] = useState(false)
   const [reports, setReports] = useState([])
 
-  // Handle perubahan input teks
+  // Handle perubahan input
   const handleChange = (index, field, value) => {
     const newReports = [...reports]
     newReports[index][field] = value
-    setReports(newReports)
-  }
-
-  // Handle upload evidence
-  const handleFileChange = (index, file) => {
-    if (!file) return
-    const newReports = [...reports]
-    newReports[index].evidence = {
-      name: file.name,
-      url: URL.createObjectURL(file),
-    }
     setReports(newReports)
   }
 
@@ -38,9 +27,16 @@ function App() {
         plan: "",
         aktual: "",
         status: "",
-        evidence: null
+        evidence: ""
       }
     ])
+  }
+
+  // Hapus baris laporan
+  const deleteRow = (index) => {
+    const newReports = [...reports]
+    newReports.splice(index, 1)
+    setReports(newReports)
   }
 
   // Export Excel dengan style tabel
@@ -58,12 +54,12 @@ function App() {
     reports.forEach((r) => {
       const row = worksheet.addRow([
         r.nama, r.tanggal, r.agenda, r.pekerjaan,
-        r.plan, r.aktual, r.status, r.evidence ? r.evidence.name : "",
+        r.plan, r.aktual, r.status, r.evidence || "",
       ])
 
       if (r.evidence) {
         const cell = row.getCell(8)
-        cell.value = { text: r.evidence.name, hyperlink: r.evidence.url }
+        cell.value = { text: "Lihat Bukti", hyperlink: r.evidence }
         cell.font = { color: { argb: "FF0000FF" }, underline: true }
       }
     })
@@ -125,7 +121,7 @@ function App() {
             onClick={() => setDarkMode(!darkMode)}
             className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:scale-105 transition"
           >
-            {darkMode ? <Sun size={20}/> : <Moon size={20}/>}
+            {darkMode ? <Sun size={20}/> : <Moon size={20}/> }
           </button>
         </div>
 
@@ -164,7 +160,7 @@ function App() {
           <table className="min-w-full border border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden">
             <thead className="bg-gray-200 dark:bg-gray-700 text-sm uppercase tracking-wide">
               <tr>
-                {["Nama","Tanggal","Agenda","Pekerjaan","Plan","Aktual","Status","Evidence"].map((h,i)=>(
+                {["Nama","Tanggal","Agenda","Pekerjaan","Plan","Aktual","Status","Evidence","Aksi"].map((h,i)=>(
                   <th key={i} className="px-4 py-3 text-center">{h}</th>
                 ))}
               </tr>
@@ -173,26 +169,26 @@ function App() {
               {reports.map((r,index)=>(
                 <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-600 transition">
                   <td className="px-4 py-2">
-                    <input type="text" value={r.nama} onChange={(e)=>handleChange(index,"nama",e.target.value)} className="w-full border rounded p-1"/>
+                    <input type="text" value={r.nama} onChange={(e)=>handleChange(index,"nama",e.target.value)} className="w-full border rounded px-2 py-1"/>
                   </td>
                   <td className="px-4 py-2">
-                    <input type="date" value={r.tanggal} onChange={(e)=>handleChange(index,"tanggal",e.target.value)} className="w-full border rounded p-1"/>
+                    <input type="date" value={r.tanggal} onChange={(e)=>handleChange(index,"tanggal",e.target.value)} className="w-full border rounded px-2 py-1"/>
                   </td>
                   <td className="px-4 py-2">
-                    <input type="text" value={r.agenda} onChange={(e)=>handleChange(index,"agenda",e.target.value)} className="w-full border rounded p-1"/>
+                    <input type="text" value={r.agenda} onChange={(e)=>handleChange(index,"agenda",e.target.value)} className="w-full border rounded px-2 py-1"/>
                   </td>
                   <td className="px-4 py-2">
-                    <input type="text" value={r.pekerjaan} onChange={(e)=>handleChange(index,"pekerjaan",e.target.value)} className="w-full border rounded p-1"/>
+                    <input type="text" value={r.pekerjaan} onChange={(e)=>handleChange(index,"pekerjaan",e.target.value)} className="w-full border rounded px-2 py-1"/>
                   </td>
                   <td className="px-4 py-2">
-                    <input type="text" value={r.plan} onChange={(e)=>handleChange(index,"plan",e.target.value)} className="w-full border rounded p-1"/>
+                    <input type="text" value={r.plan} onChange={(e)=>handleChange(index,"plan",e.target.value)} className="w-full border rounded px-2 py-1"/>
                   </td>
                   <td className="px-4 py-2">
-                    <input type="text" value={r.aktual} onChange={(e)=>handleChange(index,"aktual",e.target.value)} className="w-full border rounded p-1"/>
+                    <input type="text" value={r.aktual} onChange={(e)=>handleChange(index,"aktual",e.target.value)} className="w-full border rounded px-2 py-1"/>
                   </td>
                   <td className="px-4 py-2">
-                    <select value={r.status} onChange={(e)=>handleChange(index,"status",e.target.value)} className="w-full border rounded p-1">
-                      <option value="">-</option>
+                    <select value={r.status} onChange={(e)=>handleChange(index,"status",e.target.value)} className="w-full border rounded px-2 py-1">
+                      <option value="">--Pilih--</option>
                       <option value="Done">Done</option>
                       <option value="Progress">Progress</option>
                       <option value="Pending">Pending</option>
@@ -201,14 +197,20 @@ function App() {
                   <td className="px-4 py-2">
                     <input
                       type="file"
-                      accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                      onChange={(e)=>handleFileChange(index, e.target.files[0])}
+                      accept=".pdf,.doc,.docx,.jpg,.png"
+                      onChange={(e)=>{
+                        const file = e.target.files[0]
+                        if(file){
+                          handleChange(index,"evidence",URL.createObjectURL(file))
+                        }
+                      }}
+                      className="w-full"
                     />
-                    {r.evidence && (
-                      <a href={r.evidence.url} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline block mt-1">
-                        {r.evidence.name}
-                      </a>
-                    )}
+                  </td>
+                  <td className="px-4 py-2 text-center">
+                    <button onClick={()=>deleteRow(index)} className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600">
+                      Hapus
+                    </button>
                   </td>
                 </tr>
               ))}
