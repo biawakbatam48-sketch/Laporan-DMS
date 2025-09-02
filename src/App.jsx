@@ -1,13 +1,23 @@
 import { useState } from "react"
 import ExcelJS from "exceljs"
 import { saveAs } from "file-saver"
-import { Plus, FileSpreadsheet, Trash2, Moon, Sun } from "lucide-react"
+import {
+  Plus,
+  FileSpreadsheet,
+  Trash2,
+  Moon,
+  Sun,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react"
 
 function App() {
   const [darkMode, setDarkMode] = useState(false)
   const [reports, setReports] = useState([])
   const [activeReport, setActiveReport] = useState(null)
   const [activePage, setActivePage] = useState("dashboard")
+  const [showForm, setShowForm] = useState(true)
+  const [showDetail, setShowDetail] = useState(true)
 
   const handleChange = (index, field, value) => {
     const newReports = [...reports]
@@ -212,218 +222,208 @@ function App() {
           {/* Laporan */}
           {activePage === "laporan" && (
             <>
-              <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
-                <div className="flex gap-4 mb-4">
-                  <button
-                    onClick={addRow}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 shadow"
-                  >
-                    <Plus size={18} /> Tambah Laporan
-                  </button>
-                  <button
-                    onClick={exportToExcel}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 shadow"
-                  >
-                    <FileSpreadsheet size={18} /> Export Excel
-                  </button>
-                </div>
-
-                <table className="min-w-full border border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden">
-                  <thead className="bg-gray-200 dark:bg-gray-700 text-sm uppercase tracking-wide">
-                    <tr>
-                      {[
-                        "Nama",
-                        "Tanggal",
-                        "Agenda",
-                        "Pekerjaan",
-                        "Plan",
-                        "Aktual",
-                        "Status",
-                        "Evidence",
-                        "Aksi",
-                      ].map((h, i) => (
-                        <th key={i} className="px-4 py-3 text-center">
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {reports.map((r, index) => (
-                      <tr
-                        key={index}
-                        className="hover:bg-gray-50 dark:hover:bg-gray-600 transition"
+              {/* FORM input laporan */}
+              <div className="bg-white dark:bg-gray-800 shadow rounded-lg mb-6">
+                <button
+                  onClick={() => setShowForm(!showForm)}
+                  className="flex justify-between items-center w-full px-4 py-3 font-semibold border-b dark:border-gray-700"
+                >
+                  <span>📝 Form Laporan</span>
+                  {showForm ? <ChevronUp /> : <ChevronDown />}
+                </button>
+                {showForm && (
+                  <div className="p-4">
+                    <div className="flex gap-4 mb-4">
+                      <button
+                        onClick={addRow}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 shadow"
                       >
-                        <td className="px-4 py-2">
+                        <Plus size={18} /> Tambah Laporan
+                      </button>
+                      <button
+                        onClick={exportToExcel}
+                        className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 shadow"
+                      >
+                        <FileSpreadsheet size={18} /> Export Excel
+                      </button>
+                    </div>
+
+                    {/* Tabel diubah ke grid form */}
+                    {reports.map((r, index) => (
+                      <div
+                        key={index}
+                        className="grid grid-cols-2 gap-6 p-4 border rounded-lg mb-4 dark:border-gray-700 bg-gray-50 dark:bg-gray-700"
+                      >
+                        {/* Kolom Kiri */}
+                        <div>
+                          <label className="block mb-1">Nama</label>
                           <input
                             type="text"
                             value={r.nama}
                             onChange={(e) =>
                               handleChange(index, "nama", e.target.value)
                             }
-                            className="w-56 p-2 border rounded bg-gray-50 text-gray-900 dark:bg-gray-700 dark:text-white truncate"
-                            title={r.nama}
+                            className="w-full p-2 border rounded bg-white dark:bg-gray-800"
                           />
-                        </td>
-                        <td className="px-4 py-2">
+
+                          <label className="block mt-3 mb-1">Tanggal</label>
                           <input
                             type="date"
                             value={r.tanggal}
                             onChange={(e) =>
                               handleChange(index, "tanggal", e.target.value)
                             }
-                            className="w-44 p-2 border rounded bg-gray-50 text-gray-900 dark:bg-gray-700 dark:text-white"
+                            className="w-full p-2 border rounded bg-white dark:bg-gray-800"
                           />
-                        </td>
-                        <td className="px-4 py-2">
+
+                          <label className="block mt-3 mb-1">Agenda</label>
                           <input
                             type="text"
                             value={r.agenda}
                             onChange={(e) =>
                               handleChange(index, "agenda", e.target.value)
                             }
-                            className="w-56 p-2 border rounded bg-gray-50 text-gray-900 dark:bg-gray-700 dark:text-white truncate"
-                            title={r.agenda}
+                            className="w-full p-2 border rounded bg-white dark:bg-gray-800"
                           />
-                        </td>
-                        <td className="px-4 py-2">
+
+                          <label className="block mt-3 mb-1">Pekerjaan</label>
                           <input
                             type="text"
                             value={r.pekerjaan}
                             onChange={(e) =>
                               handleChange(index, "pekerjaan", e.target.value)
                             }
-                            className="w-72 p-2 border rounded bg-gray-50 text-gray-900 dark:bg-gray-700 dark:text-white truncate"
-                            title={r.pekerjaan}
+                            className="w-full p-2 border rounded bg-white dark:bg-gray-800"
                           />
-                        </td>
-                        <td className="px-4 py-2">
+                        </div>
+
+                        {/* Kolom Kanan */}
+                        <div>
+                          <label className="block mb-1">Plan</label>
                           <input
                             type="text"
                             value={r.plan}
                             onChange={(e) =>
                               handleChange(index, "plan", e.target.value)
                             }
-                            className="w-44 p-2 border rounded bg-gray-50 text-gray-900 dark:bg-gray-700 dark:text-white truncate"
-                            title={r.plan}
+                            className="w-full p-2 border rounded bg-white dark:bg-gray-800"
                           />
-                        </td>
-                        <td className="px-4 py-2">
+
+                          <label className="block mt-3 mb-1">Aktual</label>
                           <input
                             type="text"
                             value={r.aktual}
                             onChange={(e) =>
                               handleChange(index, "aktual", e.target.value)
                             }
-                            className="w-44 p-2 border rounded bg-gray-50 text-gray-900 dark:bg-gray-700 dark:text-white truncate"
-                            title={r.aktual}
+                            className="w-full p-2 border rounded bg-white dark:bg-gray-800"
                           />
-                        </td>
-                        <td className="px-4 py-2">
+
+                          <label className="block mt-3 mb-1">Status</label>
                           <select
                             value={r.status}
                             onChange={(e) =>
                               handleChange(index, "status", e.target.value)
                             }
-                            className="w-36 p-2 border rounded bg-gray-50 text-gray-900 dark:bg-gray-700 dark:text-white"
+                            className="w-full p-2 border rounded bg-white dark:bg-gray-800"
                           >
                             <option value="">Pilih</option>
                             <option value="Done">Done</option>
                             <option value="Progress">Progress</option>
                             <option value="Pending">Pending</option>
                           </select>
-                        </td>
-                        <td className="px-4 py-2">
-                          <label className="block w-56 px-3 py-2 text-sm text-gray-700 bg-gray-100 rounded cursor-pointer dark:bg-gray-700 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600 transition truncate">
-                            Pilih File
-                            <input
-                              type="file"
-                              accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                              onChange={(e) =>
-                                handleFileChange(index, e.target.files[0])
-                              }
-                              className="hidden"
-                            />
-                          </label>
+
+                          <label className="block mt-3 mb-1">Evidence</label>
+                          <input
+                            type="file"
+                            accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                            onChange={(e) =>
+                              handleFileChange(index, e.target.files[0])
+                            }
+                            className="w-full text-sm"
+                          />
                           {r.evidence && (
                             <a
                               href={r.evidence.url}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-blue-500 hover:underline block mt-1 truncate max-w-[200px]"
+                              className="text-blue-500 hover:underline block mt-1 truncate"
                               title={r.evidence.name}
                             >
                               {r.evidence.name}
                             </a>
                           )}
-                        </td>
-                        <td className="px-4 py-2 text-center">
+                        </div>
+
+                        <div className="col-span-2 text-right">
                           <button
                             onClick={() => deleteRow(index)}
                             className="p-2 bg-red-500 text-white rounded hover:bg-red-600"
                           >
                             <Trash2 size={16} />
                           </button>
-                        </td>
-                      </tr>
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
+                  </div>
+                )}
               </div>
 
               {/* Detail laporan */}
               {activeReport !== null && reports[activeReport] && (
-                <div className="mt-6">
-                  <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                    📄 Detail Laporan
-                  </h2>
-
-                  <div className="bg-white dark:bg-gray-800 shadow rounded-2xl p-5 divide-y divide-gray-200 dark:divide-gray-700">
-                    {[
-                      { label: "Nama", value: reports[activeReport].nama },
-                      { label: "Tanggal", value: reports[activeReport].tanggal },
-                      { label: "Agenda", value: reports[activeReport].agenda },
-                      { label: "Pekerjaan", value: reports[activeReport].pekerjaan },
-                      { label: "Plan", value: reports[activeReport].plan },
-                      { label: "Aktual", value: reports[activeReport].aktual },
-                      { label: "Status", value: reports[activeReport].status },
-                      {
-                        label: "Evidence",
-                        value: reports[activeReport].evidence ? (
-                          <a
-                            href={reports[activeReport].evidence.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-500 hover:underline truncate max-w-[200px] inline-block"
-                            title={reports[activeReport].evidence.name}
+                <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+                  <button
+                    onClick={() => setShowDetail(!showDetail)}
+                    className="flex justify-between items-center w-full px-4 py-3 font-semibold border-b dark:border-gray-700"
+                  >
+                    <span>📄 Detail Laporan</span>
+                    {showDetail ? <ChevronUp /> : <ChevronDown />}
+                  </button>
+                  {showDetail && (
+                    <div className="p-5 divide-y divide-gray-200 dark:divide-gray-700">
+                      {[
+                        { label: "Nama", value: reports[activeReport].nama },
+                        { label: "Tanggal", value: reports[activeReport].tanggal },
+                        { label: "Agenda", value: reports[activeReport].agenda },
+                        { label: "Pekerjaan", value: reports[activeReport].pekerjaan },
+                        { label: "Plan", value: reports[activeReport].plan },
+                        { label: "Aktual", value: reports[activeReport].aktual },
+                        { label: "Status", value: reports[activeReport].status },
+                        {
+                          label: "Evidence",
+                          value: reports[activeReport].evidence ? (
+                            <a
+                              href={reports[activeReport].evidence.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-500 hover:underline truncate max-w-[200px] inline-block"
+                              title={reports[activeReport].evidence.name}
+                            >
+                              {reports[activeReport].evidence.name}
+                            </a>
+                          ) : (
+                            "-"
+                          ),
+                        },
+                      ].map((item, idx) => (
+                        <div key={idx} className="grid grid-cols-3 gap-4 py-2">
+                          <span className="font-medium text-gray-600 dark:text-gray-300">
+                            {item.label}
+                          </span>
+                          <span
+                            className={`col-span-2 text-right truncate ${
+                              !item.value || item.value === "-"
+                                ? "text-gray-400 italic"
+                                : "text-gray-800 dark:text-gray-100"
+                            }`}
+                            title={typeof item.value === "string" ? item.value : ""}
                           >
-                            {reports[activeReport].evidence.name}
-                          </a>
-                        ) : (
-                          "-"
-                        ),
-                      },
-                    ].map((item, idx) => (
-                      <div
-                        key={idx}
-                        className="grid grid-cols-3 gap-4 py-2"
-                      >
-                        <span className="font-medium text-gray-600 dark:text-gray-300">
-                          {item.label}
-                        </span>
-                        <span
-                          className={`col-span-2 text-right truncate ${
-                            !item.value || item.value === "-"
-                              ? "text-gray-400 italic"
-                              : "text-gray-800 dark:text-gray-100"
-                          }`}
-                          title={typeof item.value === "string" ? item.value : ""}
-                        >
-                          {item.value || "-"}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+                            {item.value || "-"}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </>
