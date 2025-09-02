@@ -2,27 +2,27 @@ import { useState } from "react"
 import ExcelJS from "exceljs"
 import { saveAs } from "file-saver"
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts"
-import { Plus, FileSpreadsheet, Moon, Sun } from "lucide-react"
+import { Plus, FileSpreadsheet, Moon, Sun, Upload } from "lucide-react"
 
 function App() {
   const [darkMode, setDarkMode] = useState(false)
-  const [reports, setReports] = useState([
-    {
-      nama: "Andi",
-      tanggal: "2025-09-02",
-      agenda: "Meeting",
-      pekerjaan: "Review Project",
-      plan: "Selesai Review",
-      aktual: "Selesai",
-      status: "Done",
-      evidence: "https://via.placeholder.com/150"
-    }
-  ])
+  const [reports, setReports] = useState([])
 
-  // Handle perubahan input
+  // Handle perubahan input teks
   const handleChange = (index, field, value) => {
     const newReports = [...reports]
     newReports[index][field] = value
+    setReports(newReports)
+  }
+
+  // Handle upload evidence
+  const handleFileChange = (index, file) => {
+    if (!file) return
+    const newReports = [...reports]
+    newReports[index].evidence = {
+      name: file.name,
+      url: URL.createObjectURL(file),
+    }
     setReports(newReports)
   }
 
@@ -38,7 +38,7 @@ function App() {
         plan: "",
         aktual: "",
         status: "",
-        evidence: ""
+        evidence: null
       }
     ])
   }
@@ -58,12 +58,12 @@ function App() {
     reports.forEach((r) => {
       const row = worksheet.addRow([
         r.nama, r.tanggal, r.agenda, r.pekerjaan,
-        r.plan, r.aktual, r.status, r.evidence || "",
+        r.plan, r.aktual, r.status, r.evidence ? r.evidence.name : "",
       ])
 
       if (r.evidence) {
         const cell = row.getCell(8)
-        cell.value = { text: "Lihat Bukti", hyperlink: r.evidence }
+        cell.value = { text: r.evidence.name, hyperlink: r.evidence.url }
         cell.font = { color: { argb: "FF0000FF" }, underline: true }
       }
     })
@@ -172,21 +172,43 @@ function App() {
             <tbody>
               {reports.map((r,index)=>(
                 <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-600 transition">
-                  <td className="px-4 py-2">{r.nama}</td>
-                  <td className="px-4 py-2">{r.tanggal}</td>
-                  <td className="px-4 py-2">{r.agenda}</td>
-                  <td className="px-4 py-2">{r.pekerjaan}</td>
-                  <td className="px-4 py-2">{r.plan}</td>
-                  <td className="px-4 py-2">{r.aktual}</td>
                   <td className="px-4 py-2">
-                    {r.status === "Done" && <span className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded">Done</span>}
-                    {r.status === "Progress" && <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded">Progress</span>}
-                    {r.status === "Pending" && <span className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded">Pending</span>}
+                    <input type="text" value={r.nama} onChange={(e)=>handleChange(index,"nama",e.target.value)} className="w-full border rounded p-1"/>
                   </td>
                   <td className="px-4 py-2">
-                    {r.evidence ? (
-                      <a href={r.evidence} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">Lihat Bukti</a>
-                    ) : "-"}
+                    <input type="date" value={r.tanggal} onChange={(e)=>handleChange(index,"tanggal",e.target.value)} className="w-full border rounded p-1"/>
+                  </td>
+                  <td className="px-4 py-2">
+                    <input type="text" value={r.agenda} onChange={(e)=>handleChange(index,"agenda",e.target.value)} className="w-full border rounded p-1"/>
+                  </td>
+                  <td className="px-4 py-2">
+                    <input type="text" value={r.pekerjaan} onChange={(e)=>handleChange(index,"pekerjaan",e.target.value)} className="w-full border rounded p-1"/>
+                  </td>
+                  <td className="px-4 py-2">
+                    <input type="text" value={r.plan} onChange={(e)=>handleChange(index,"plan",e.target.value)} className="w-full border rounded p-1"/>
+                  </td>
+                  <td className="px-4 py-2">
+                    <input type="text" value={r.aktual} onChange={(e)=>handleChange(index,"aktual",e.target.value)} className="w-full border rounded p-1"/>
+                  </td>
+                  <td className="px-4 py-2">
+                    <select value={r.status} onChange={(e)=>handleChange(index,"status",e.target.value)} className="w-full border rounded p-1">
+                      <option value="">-</option>
+                      <option value="Done">Done</option>
+                      <option value="Progress">Progress</option>
+                      <option value="Pending">Pending</option>
+                    </select>
+                  </td>
+                  <td className="px-4 py-2">
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                      onChange={(e)=>handleFileChange(index, e.target.files[0])}
+                    />
+                    {r.evidence && (
+                      <a href={r.evidence.url} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline block mt-1">
+                        {r.evidence.name}
+                      </a>
+                    )}
                   </td>
                 </tr>
               ))}
