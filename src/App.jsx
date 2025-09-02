@@ -14,7 +14,7 @@ function App() {
     setReports(newReports)
   }
 
-  // Handle upload file dokumen
+  // Handle upload file
   const handleFileChange = (index, file) => {
     if (file) {
       const fileURL = URL.createObjectURL(file)
@@ -48,7 +48,7 @@ function App() {
     setReports(newReports)
   }
 
-  // Export Excel dengan style tabel
+  // Export Excel
   const exportToExcel = async () => {
     const workbook = new ExcelJS.Workbook()
     const worksheet = workbook.addWorksheet("Laporan")
@@ -64,7 +64,6 @@ function App() {
         r.plan, r.aktual, r.status,
         r.evidence ? r.evidence.name : ""
       ])
-
       if (r.evidence) {
         const cell = row.getCell(8)
         cell.value = { text: r.evidence.name, hyperlink: r.evidence.url }
@@ -96,146 +95,148 @@ function App() {
   }
 
   return (
-    <div className={darkMode ? "bg-gray-900 text-white min-h-screen flex" : "bg-gray-100 text-gray-900 min-h-screen flex"}>
-      {/* Sidebar */}
-      <aside className="w-72 bg-gradient-to-b from-blue-700 to-blue-500 text-white p-6 shadow-lg">
-        <h2 className="text-2xl font-bold mb-8 leading-snug">
-          ALL TEAM <br /> 
-          <span className="text-sm font-medium">Laporan Harian CV RANGGA</span>
-        </h2>
-        <ul className="space-y-4">
-          <li className="cursor-pointer hover:text-yellow-300">🏠 Dashboard</li>
-          <li className="cursor-pointer hover:text-yellow-300">📝 Laporan</li>
-          <li className="cursor-pointer hover:text-yellow-300">⚙️ Pengaturan</li>
-        </ul>
-      </aside>
+    <div className={darkMode ? "dark" : ""}>
+      <div className="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen flex">
+        {/* Sidebar */}
+        <aside className="w-72 bg-gradient-to-b from-blue-700 to-blue-500 dark:from-gray-800 dark:to-gray-800 text-white p-6 shadow-lg">
+          <h2 className="text-2xl font-bold mb-8 leading-snug">
+            ALL TEAM <br />
+            <span className="text-sm font-medium">Laporan Harian CV RANGGA</span>
+          </h2>
+          <ul className="space-y-4">
+            <li className="cursor-pointer hover:text-yellow-300">🏠 Dashboard</li>
+            <li className="cursor-pointer hover:text-yellow-300">📝 Laporan</li>
+            <li className="cursor-pointer hover:text-yellow-300">⚙️ Pengaturan</li>
+          </ul>
+        </aside>
 
-      {/* Main Content */}
-      <div className="flex-1 p-6">
-        {/* Navbar */}
-        <div className="flex justify-between items-center mb-6 bg-white dark:bg-gray-800 shadow rounded-lg px-6 py-3">
-          <h1 className="text-xl font-semibold">📌 Laporan Harian / Mingguan / Bulanan</h1>
-          <button
-            onClick={() => setDarkMode(!darkMode)}
-            className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:scale-105 transition"
-          >
-            {darkMode ? <Sun size={20}/> : <Moon size={20}/>}
-          </button>
-        </div>
-
-        {/* Table */}
-        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
-          <div className="flex gap-4 mb-4">
+        {/* Main Content */}
+        <div className="flex-1 p-6">
+          {/* Navbar */}
+          <div className="flex justify-between items-center mb-6 bg-white dark:bg-gray-800 shadow rounded-lg px-6 py-3">
+            <h1 className="text-xl font-semibold">📌 Laporan Harian / Mingguan / Bulanan</h1>
             <button
-              onClick={addRow}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 shadow"
+              onClick={() => setDarkMode(!darkMode)}
+              className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:scale-105 transition"
             >
-              <Plus size={18}/> Tambah Laporan
-            </button>
-            <button
-              onClick={exportToExcel}
-              className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 shadow"
-            >
-              <FileSpreadsheet size={18}/> Export Excel
+              {darkMode ? <Sun size={20}/> : <Moon size={20}/>}
             </button>
           </div>
 
-          <table className="min-w-full border border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden">
-            <thead className="bg-gray-200 dark:bg-gray-700 text-sm uppercase tracking-wide">
-              <tr>
-                {["Nama","Tanggal","Agenda","Pekerjaan","Plan","Aktual","Status","Evidence","Aksi"].map((h,i)=>(
-                  <th key={i} className="px-4 py-3 text-center">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {reports.map((r,index)=>(
-                <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-600 transition">
-                  <td className="px-4 py-2">
-                    <input 
-                      type="text"
-                      value={r.nama}
-                      onChange={(e)=>handleChange(index,"nama",e.target.value)}
-                      className="w-48 p-2 border rounded"
-                    />
-                  </td>
-                  <td className="px-4 py-2">
-                    <input 
-                      type="date"
-                      value={r.tanggal}
-                      onChange={(e)=>handleChange(index,"tanggal",e.target.value)}
-                      className="w-40 p-2 border rounded"
-                    />
-                  </td>
-                  <td className="px-4 py-2">
-                    <input 
-                      type="text"
-                      value={r.agenda}
-                      onChange={(e)=>handleChange(index,"agenda",e.target.value)}
-                      className="w-48 p-2 border rounded"
-                    />
-                  </td>
-                  <td className="px-4 py-2">
-                    <input 
-                      type="text"
-                      value={r.pekerjaan}
-                      onChange={(e)=>handleChange(index,"pekerjaan",e.target.value)}
-                      className="w-60 p-2 border rounded"
-                    />
-                  </td>
-                  <td className="px-4 py-2">
-                    <input 
-                      type="text"
-                      value={r.plan}
-                      onChange={(e)=>handleChange(index,"plan",e.target.value)}
-                      className="w-40 p-2 border rounded"
-                    />
-                  </td>
-                  <td className="px-4 py-2">
-                    <input 
-                      type="text"
-                      value={r.aktual}
-                      onChange={(e)=>handleChange(index,"aktual",e.target.value)}
-                      className="w-40 p-2 border rounded"
-                    />
-                  </td>
-                  <td className="px-4 py-2">
-                    <select 
-                      value={r.status}
-                      onChange={(e)=>handleChange(index,"status",e.target.value)}
-                      className="w-32 p-2 border rounded"
-                    >
-                      <option value="">Pilih</option>
-                      <option value="Done">Done</option>
-                      <option value="Progress">Progress</option>
-                      <option value="Pending">Pending</option>
-                    </select>
-                  </td>
-                  <td className="px-4 py-2">
-                    <input 
-                      type="file"
-                      accept=".pdf,.doc,.docx,.xls,.xlsx"
-                      onChange={(e)=>handleFileChange(index, e.target.files[0])}
-                      className="w-52"
-                    />
-                    {r.evidence && (
-                      <a href={r.evidence.url} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline block mt-1">
-                        {r.evidence.name}
-                      </a>
-                    )}
-                  </td>
-                  <td className="px-4 py-2 text-center">
-                    <button 
-                      onClick={()=>deleteRow(index)}
-                      className="p-2 bg-red-500 text-white rounded hover:bg-red-600"
-                    >
-                      <Trash2 size={16}/>
-                    </button>
-                  </td>
+          {/* Table */}
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
+            <div className="flex gap-4 mb-4">
+              <button
+                onClick={addRow}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 shadow"
+              >
+                <Plus size={18}/> Tambah Laporan
+              </button>
+              <button
+                onClick={exportToExcel}
+                className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 shadow"
+              >
+                <FileSpreadsheet size={18}/> Export Excel
+              </button>
+            </div>
+
+            <table className="min-w-full border border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden">
+              <thead className="bg-gray-200 dark:bg-gray-700 text-sm uppercase tracking-wide">
+                <tr>
+                  {["Nama","Tanggal","Agenda","Pekerjaan","Plan","Aktual","Status","Evidence","Aksi"].map((h,i)=>(
+                    <th key={i} className="px-4 py-3 text-center">{h}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {reports.map((r,index)=>(
+                  <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-600 transition">
+                    <td className="px-4 py-2">
+                      <input 
+                        type="text"
+                        value={r.nama}
+                        onChange={(e)=>handleChange(index,"nama",e.target.value)}
+                        className="w-56 p-2 border rounded bg-white dark:bg-gray-700 dark:text-white"
+                      />
+                    </td>
+                    <td className="px-4 py-2">
+                      <input 
+                        type="date"
+                        value={r.tanggal}
+                        onChange={(e)=>handleChange(index,"tanggal",e.target.value)}
+                        className="w-44 p-2 border rounded bg-white dark:bg-gray-700 dark:text-white"
+                      />
+                    </td>
+                    <td className="px-4 py-2">
+                      <input 
+                        type="text"
+                        value={r.agenda}
+                        onChange={(e)=>handleChange(index,"agenda",e.target.value)}
+                        className="w-56 p-2 border rounded bg-white dark:bg-gray-700 dark:text-white"
+                      />
+                    </td>
+                    <td className="px-4 py-2">
+                      <input 
+                        type="text"
+                        value={r.pekerjaan}
+                        onChange={(e)=>handleChange(index,"pekerjaan",e.target.value)}
+                        className="w-72 p-2 border rounded bg-white dark:bg-gray-700 dark:text-white"
+                      />
+                    </td>
+                    <td className="px-4 py-2">
+                      <input 
+                        type="text"
+                        value={r.plan}
+                        onChange={(e)=>handleChange(index,"plan",e.target.value)}
+                        className="w-44 p-2 border rounded bg-white dark:bg-gray-700 dark:text-white"
+                      />
+                    </td>
+                    <td className="px-4 py-2">
+                      <input 
+                        type="text"
+                        value={r.aktual}
+                        onChange={(e)=>handleChange(index,"aktual",e.target.value)}
+                        className="w-44 p-2 border rounded bg-white dark:bg-gray-700 dark:text-white"
+                      />
+                    </td>
+                    <td className="px-4 py-2">
+                      <select 
+                        value={r.status}
+                        onChange={(e)=>handleChange(index,"status",e.target.value)}
+                        className="w-36 p-2 border rounded bg-white dark:bg-gray-700 dark:text-white"
+                      >
+                        <option value="">Pilih</option>
+                        <option value="Done">Done</option>
+                        <option value="Progress">Progress</option>
+                        <option value="Pending">Pending</option>
+                      </select>
+                    </td>
+                    <td className="px-4 py-2">
+                      <input 
+                        type="file"
+                        accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                        onChange={(e)=>handleFileChange(index, e.target.files[0])}
+                        className="w-56 text-sm"
+                      />
+                      {r.evidence && (
+                        <a href={r.evidence.url} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline block mt-1">
+                          {r.evidence.name}
+                        </a>
+                      )}
+                    </td>
+                    <td className="px-4 py-2 text-center">
+                      <button 
+                        onClick={()=>deleteRow(index)}
+                        className="p-2 bg-red-500 text-white rounded hover:bg-red-600"
+                      >
+                        <Trash2 size={16}/>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
