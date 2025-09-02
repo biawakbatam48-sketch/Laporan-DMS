@@ -18,6 +18,7 @@ function App() {
   const [activePage, setActivePage] = useState("dashboard")
   const [showForm, setShowForm] = useState(true)
   const [showDetail, setShowDetail] = useState(true)
+  const [user, setUser] = useState(null) // state untuk menyimpan data user
 
   const handleChange = (index, field, value) => {
     const newReports = [...reports]
@@ -133,6 +134,19 @@ function App() {
     saveAs(new Blob([buf]), "Laporan Harian CV Rangga.xlsx")
   }
 
+  // Jika user belum login, tampilkan login/register
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+        <div className="w-full max-w-md p-6 bg-white dark:bg-gray-800 rounded-lg shadow space-y-6">
+          <Login supabase={supabase} onLogin={setUser} />
+          <Register supabase={supabase} />
+        </div>
+      </div>
+    )
+  }
+
+  // === Render konten utama seperti App.jsx Anda sebelumnya ===
   return (
     <div className={darkMode ? "dark" : ""}>
       <div className="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen flex">
@@ -193,6 +207,15 @@ function App() {
             >
               ⚙️ Pengaturan
             </li>
+            <li
+              className="cursor-pointer hover:text-red-400 mt-4"
+              onClick={async () => {
+                await supabase.auth.signOut()
+                setUser(null)
+              }}
+            >
+              🔓 Logout
+            </li>
           </ul>
         </aside>
 
@@ -214,7 +237,7 @@ function App() {
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
               <h2 className="text-lg font-semibold mb-3">📊 Dashboard</h2>
               <p className="text-gray-600 dark:text-gray-300">
-                Selamat datang di sistem laporan. Silakan pilih menu di sidebar.
+                Selamat datang, {user.username}! Silakan pilih menu di sidebar.
               </p>
             </div>
           )}
@@ -248,7 +271,7 @@ function App() {
                       </button>
                     </div>
 
-                    {/* Tabel diubah ke grid form */}
+                    {/* Grid form laporan */}
                     {reports.map((r, index) => (
                       <div
                         key={index}
