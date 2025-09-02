@@ -2,12 +2,7 @@ import { useState } from "react"
 import ExcelJS from "exceljs"
 import { saveAs } from "file-saver"
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts"
-import {
-  Plus,
-  FileSpreadsheet,
-  Moon,
-  Sun,
-} from "lucide-react"
+import { Plus, FileSpreadsheet, Moon, Sun } from "lucide-react"
 
 function App() {
   const [darkMode, setDarkMode] = useState(false)
@@ -82,7 +77,7 @@ function App() {
     })
 
     // Style isi tabel
-    worksheet.eachRow((row, rowNumber) => {
+    worksheet.eachRow((row) => {
       row.eachCell((cell) => {
         cell.alignment = { horizontal: "center", vertical: "middle" }
         cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } }
@@ -109,23 +104,26 @@ function App() {
   return (
     <div className={darkMode ? "bg-gray-900 text-white min-h-screen flex" : "bg-gray-100 text-gray-900 min-h-screen flex"}>
       {/* Sidebar */}
-      <aside className="w-64 bg-blue-600 text-white p-6">
-        <h2 className="text-xl font-bold mb-6">📊 DMS Reports</h2>
-        <ul className="space-y-3">
-          <li>🏠 Dashboard</li>
-          <li>📝 Laporan</li>
-          <li>⚙️ Pengaturan</li>
+      <aside className="w-72 bg-gradient-to-b from-blue-700 to-blue-500 text-white p-6 shadow-lg">
+        <h2 className="text-2xl font-bold mb-8 leading-snug">
+          ALL TEAM <br /> 
+          <span className="text-sm font-medium">Laporan Harian CV RANGGA</span>
+        </h2>
+        <ul className="space-y-4">
+          <li className="cursor-pointer hover:text-yellow-300">🏠 Dashboard</li>
+          <li className="cursor-pointer hover:text-yellow-300">📝 Laporan</li>
+          <li className="cursor-pointer hover:text-yellow-300">⚙️ Pengaturan</li>
         </ul>
       </aside>
 
       {/* Main Content */}
       <div className="flex-1 p-6">
         {/* Navbar */}
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Laporan Harian / Mingguan / Bulanan</h1>
+        <div className="flex justify-between items-center mb-6 bg-white dark:bg-gray-800 shadow rounded-lg px-6 py-3">
+          <h1 className="text-xl font-semibold">📌 Laporan Harian / Mingguan / Bulanan</h1>
           <button
             onClick={() => setDarkMode(!darkMode)}
-            className="p-2 rounded-full bg-gray-200 dark:bg-gray-700"
+            className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:scale-105 transition"
           >
             {darkMode ? <Sun size={20}/> : <Moon size={20}/>}
           </button>
@@ -133,7 +131,7 @@ function App() {
 
         {/* Chart */}
         <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4 mb-6">
-          <h2 className="text-lg font-semibold mb-2">Status Laporan</h2>
+          <h2 className="text-lg font-semibold mb-2">📊 Status Laporan</h2>
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80}>
@@ -151,23 +149,23 @@ function App() {
           <div className="flex gap-4 mb-4">
             <button
               onClick={addRow}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 shadow"
             >
               <Plus size={18}/> Tambah Laporan
             </button>
             <button
               onClick={exportToExcel}
-              className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+              className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 shadow"
             >
               <FileSpreadsheet size={18}/> Export Excel
             </button>
           </div>
 
-          <table className="min-w-full border border-gray-300 dark:border-gray-700 rounded-lg">
-            <thead className="bg-gray-200 dark:bg-gray-700">
+          <table className="min-w-full border border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden">
+            <thead className="bg-gray-200 dark:bg-gray-700 text-sm uppercase tracking-wide">
               <tr>
                 {["Nama","Tanggal","Agenda","Pekerjaan","Plan","Aktual","Status","Evidence"].map((h,i)=>(
-                  <th key={i} className="px-4 py-2 text-center">{h}</th>
+                  <th key={i} className="px-4 py-3 text-center">{h}</th>
                 ))}
               </tr>
             </thead>
