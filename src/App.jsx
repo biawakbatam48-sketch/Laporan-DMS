@@ -42,7 +42,7 @@ function App() {
     setReports(updated);
   };
 
-  // Export ke Excel (gambar disimpan sebagai link/path)
+  // Export ke Excel (dengan tabel & autofilter)
   const exportToExcel = () => {
     const worksheetData = [
       ["Nama", "Tanggal", "Agenda", "Pekerjaan", "Plan", "Aktual", "Status", "Evidence"],
@@ -54,10 +54,27 @@ function App() {
         r.plan,
         r.aktual,
         r.status,
-        r.evidence ? r.evidence : "", // hanya simpan path/url
+        r.evidence ? r.evidence : "",
       ]),
     ];
+
     const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+
+    // Jadikan tabel dengan AutoFilter
+    worksheet["!autofilter"] = { ref: "A1:H" + worksheetData.length };
+
+    // Atur lebar kolom
+    worksheet["!cols"] = [
+      { wch: 20 }, // Nama
+      { wch: 15 }, // Tanggal
+      { wch: 20 }, // Agenda
+      { wch: 25 }, // Pekerjaan
+      { wch: 15 }, // Plan
+      { wch: 15 }, // Aktual
+      { wch: 12 }, // Status
+      { wch: 30 }, // Evidence
+    ];
+
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan");
     XLSX.writeFile(workbook, "laporan_dms.xlsx");
