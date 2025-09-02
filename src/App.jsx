@@ -165,6 +165,7 @@ function App() {
                         className={`truncate cursor-pointer hover:text-yellow-300 ${
                           activeReport === i ? "font-bold text-yellow-300" : ""
                         }`}
+                        title={r.nama}
                       >
                         📄 {r.nama || `Laporan ${i + 1}`}
                       </li>
@@ -260,7 +261,8 @@ function App() {
                             onChange={(e) =>
                               handleChange(index, "nama", e.target.value)
                             }
-                            className="w-56 p-2 border rounded bg-gray-50 text-gray-900 dark:bg-gray-700 dark:text-white"
+                            className="w-56 p-2 border rounded bg-gray-50 text-gray-900 dark:bg-gray-700 dark:text-white truncate"
+                            title={r.nama}
                           />
                         </td>
                         <td className="px-4 py-2">
@@ -280,7 +282,8 @@ function App() {
                             onChange={(e) =>
                               handleChange(index, "agenda", e.target.value)
                             }
-                            className="w-56 p-2 border rounded bg-gray-50 text-gray-900 dark:bg-gray-700 dark:text-white"
+                            className="w-56 p-2 border rounded bg-gray-50 text-gray-900 dark:bg-gray-700 dark:text-white truncate"
+                            title={r.agenda}
                           />
                         </td>
                         <td className="px-4 py-2">
@@ -290,7 +293,8 @@ function App() {
                             onChange={(e) =>
                               handleChange(index, "pekerjaan", e.target.value)
                             }
-                            className="w-72 p-2 border rounded bg-gray-50 text-gray-900 dark:bg-gray-700 dark:text-white"
+                            className="w-72 p-2 border rounded bg-gray-50 text-gray-900 dark:bg-gray-700 dark:text-white truncate"
+                            title={r.pekerjaan}
                           />
                         </td>
                         <td className="px-4 py-2">
@@ -300,7 +304,8 @@ function App() {
                             onChange={(e) =>
                               handleChange(index, "plan", e.target.value)
                             }
-                            className="w-44 p-2 border rounded bg-gray-50 text-gray-900 dark:bg-gray-700 dark:text-white"
+                            className="w-44 p-2 border rounded bg-gray-50 text-gray-900 dark:bg-gray-700 dark:text-white truncate"
+                            title={r.plan}
                           />
                         </td>
                         <td className="px-4 py-2">
@@ -310,7 +315,8 @@ function App() {
                             onChange={(e) =>
                               handleChange(index, "aktual", e.target.value)
                             }
-                            className="w-44 p-2 border rounded bg-gray-50 text-gray-900 dark:bg-gray-700 dark:text-white"
+                            className="w-44 p-2 border rounded bg-gray-50 text-gray-900 dark:bg-gray-700 dark:text-white truncate"
+                            title={r.aktual}
                           />
                         </td>
                         <td className="px-4 py-2">
@@ -328,7 +334,7 @@ function App() {
                           </select>
                         </td>
                         <td className="px-4 py-2">
-                          <label className="block w-56 px-3 py-2 text-sm text-gray-700 bg-gray-100 rounded cursor-pointer dark:bg-gray-700 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                          <label className="block w-56 px-3 py-2 text-sm text-gray-700 bg-gray-100 rounded cursor-pointer dark:bg-gray-700 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600 transition truncate">
                             Pilih File
                             <input
                               type="file"
@@ -344,7 +350,8 @@ function App() {
                               href={r.evidence.url}
                               target="_blank"
                               rel="noreferrer"
-                              className="text-blue-500 hover:underline block mt-1"
+                              className="text-blue-500 hover:underline block mt-1 truncate max-w-[200px]"
+                              title={r.evidence.name}
                             >
                               {r.evidence.name}
                             </a>
@@ -387,7 +394,8 @@ function App() {
                             href={reports[activeReport].evidence.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-500 hover:underline"
+                            className="text-blue-500 hover:underline truncate max-w-[200px] inline-block"
+                            title={reports[activeReport].evidence.name}
                           >
                             {reports[activeReport].evidence.name}
                           </a>
@@ -404,11 +412,12 @@ function App() {
                           {item.label}
                         </span>
                         <span
-                          className={`col-span-2 text-right ${
+                          className={`col-span-2 text-right truncate ${
                             !item.value || item.value === "-"
                               ? "text-gray-400 italic"
                               : "text-gray-800 dark:text-gray-100"
                           }`}
+                          title={typeof item.value === "string" ? item.value : ""}
                         >
                           {item.value || "-"}
                         </span>
