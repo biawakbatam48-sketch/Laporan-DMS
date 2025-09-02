@@ -6,6 +6,7 @@ import { Plus, FileSpreadsheet, Trash2, Moon, Sun } from "lucide-react"
 function App() {
   const [darkMode, setDarkMode] = useState(false)
   const [reports, setReports] = useState([])
+  const [activeReport, setActiveReport] = useState(null) // laporan yang sedang dibuka
 
   // Handle perubahan input teks
   const handleChange = (index, field, value) => {
@@ -46,6 +47,7 @@ function App() {
     const newReports = [...reports]
     newReports.splice(index, 1)
     setReports(newReports)
+    if (activeReport === index) setActiveReport(null) // reset detail kalau laporan dihapus
   }
 
   // Export Excel
@@ -91,7 +93,7 @@ function App() {
     ]
 
     const buf = await workbook.xlsx.writeBuffer()
-    saveAs(new Blob([buf]), "laporan_dms.xlsx")
+    saveAs(new Blob([buf]), "Laporan Harian CV Rangga.xlsx")
   }
 
   return (
@@ -114,7 +116,13 @@ function App() {
                   <li className="text-gray-300 italic">Belum ada laporan</li>
                 ) : (
                   reports.map((r, i) => (
-                    <li key={i} className="truncate hover:text-yellow-300">
+                    <li
+                      key={i}
+                      onClick={() => setActiveReport(i)}
+                      className={`truncate cursor-pointer hover:text-yellow-300 ${
+                        activeReport === i ? "font-bold text-yellow-300" : ""
+                      }`}
+                    >
                       📄 {r.nama || `Laporan ${i + 1}`}
                     </li>
                   ))
@@ -270,6 +278,16 @@ function App() {
               </tbody>
             </table>
           </div>
+
+          {/* Detail laporan */}
+          {activeReport !== null && reports[activeReport] && (
+            <div className="mt-6 p-4 bg-white dark:bg-gray-800 shadow rounded-lg">
+              <h2 className="text-lg font-semibold mb-3">📄 Detail Laporan</h2>
+              <pre className="text-sm whitespace-pre-wrap">
+                {JSON.stringify(reports[activeReport], null, 2)}
+              </pre>
+            </div>
+          )}
         </div>
       </div>
     </div>
