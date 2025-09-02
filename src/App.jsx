@@ -10,6 +10,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react"
+import { PieChart, Pie, Cell, Legend, Tooltip, ResponsiveContainer } from "recharts"
 
 function App() {
   const [darkMode, setDarkMode] = useState(false)
@@ -18,6 +19,15 @@ function App() {
   const [activePage, setActivePage] = useState("dashboard")
   const [showForm, setShowForm] = useState(true)
   const [showDetail, setShowDetail] = useState(true)
+
+  // Hitung data chart
+  const chartData = [
+    { name: "Done", value: reports.filter((r) => r.status === "Done").length },
+    { name: "Progress", value: reports.filter((r) => r.status === "Progress").length },
+    { name: "Pending", value: reports.filter((r) => r.status === "Pending").length },
+  ]
+
+  const COLORS = ["#4ade80", "#facc15", "#f87171"] // hijau, kuning, merah
 
   const handleChange = (index, field, value) => {
     const newReports = [...reports]
@@ -213,9 +223,31 @@ function App() {
           {activePage === "dashboard" && (
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
               <h2 className="text-lg font-semibold mb-3">📊 Dashboard</h2>
-              <p className="text-gray-600 dark:text-gray-300">
+              <p className="text-gray-600 dark:text-gray-300 mb-4">
                 Selamat datang di sistem laporan. Silakan pilih menu di sidebar.
               </p>
+              {/* Chart Bulat */}
+              <div className="w-full h-64">
+                <ResponsiveContainer>
+                  <PieChart>
+                    <Pie
+                      data={chartData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      label
+                    >
+                      {chartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend verticalAlign="bottom" height={36} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           )}
 
