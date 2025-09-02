@@ -156,7 +156,8 @@ function App() {
                         type="text"
                         value={r.nama}
                         onChange={(e)=>handleChange(index,"nama",e.target.value)}
-                        className="w-56 p-2 border rounded bg-white dark:bg-gray-700 dark:text-white"
+                        className="w-56 p-2 border rounded bg-gray-50 text-gray-900
+                                   dark:bg-gray-700 dark:text-white"
                       />
                     </td>
                     <td className="px-4 py-2">
@@ -164,7 +165,8 @@ function App() {
                         type="date"
                         value={r.tanggal}
                         onChange={(e)=>handleChange(index,"tanggal",e.target.value)}
-                        className="w-44 p-2 border rounded bg-white dark:bg-gray-700 dark:text-white"
+                        className="w-44 p-2 border rounded bg-gray-50 text-gray-900
+                                   dark:bg-gray-700 dark:text-white"
                       />
                     </td>
                     <td className="px-4 py-2">
@@ -172,7 +174,8 @@ function App() {
                         type="text"
                         value={r.agenda}
                         onChange={(e)=>handleChange(index,"agenda",e.target.value)}
-                        className="w-56 p-2 border rounded bg-white dark:bg-gray-700 dark:text-white"
+                        className="w-56 p-2 border rounded bg-gray-50 text-gray-900
+                                   dark:bg-gray-700 dark:text-white"
                       />
                     </td>
                     <td className="px-4 py-2">
@@ -180,7 +183,8 @@ function App() {
                         type="text"
                         value={r.pekerjaan}
                         onChange={(e)=>handleChange(index,"pekerjaan",e.target.value)}
-                        className="w-72 p-2 border rounded bg-white dark:bg-gray-700 dark:text-white"
+                        className="w-72 p-2 border rounded bg-gray-50 text-gray-900
+                                   dark:bg-gray-700 dark:text-white"
                       />
                     </td>
                     <td className="px-4 py-2">
@@ -188,7 +192,8 @@ function App() {
                         type="text"
                         value={r.plan}
                         onChange={(e)=>handleChange(index,"plan",e.target.value)}
-                        className="w-44 p-2 border rounded bg-white dark:bg-gray-700 dark:text-white"
+                        className="w-44 p-2 border rounded bg-gray-50 text-gray-900
+                                   dark:bg-gray-700 dark:text-white"
                       />
                     </td>
                     <td className="px-4 py-2">
@@ -196,14 +201,16 @@ function App() {
                         type="text"
                         value={r.aktual}
                         onChange={(e)=>handleChange(index,"aktual",e.target.value)}
-                        className="w-44 p-2 border rounded bg-white dark:bg-gray-700 dark:text-white"
+                        className="w-44 p-2 border rounded bg-gray-50 text-gray-900
+                                   dark:bg-gray-700 dark:text-white"
                       />
                     </td>
                     <td className="px-4 py-2">
                       <select 
                         value={r.status}
                         onChange={(e)=>handleChange(index,"status",e.target.value)}
-                        className="w-36 p-2 border rounded bg-white dark:bg-gray-700 dark:text-white"
+                        className="w-36 p-2 border rounded bg-gray-50 text-gray-900
+                                   dark:bg-gray-700 dark:text-white"
                       >
                         <option value="">Pilih</option>
                         <option value="Done">Done</option>
@@ -212,14 +219,24 @@ function App() {
                       </select>
                     </td>
                     <td className="px-4 py-2">
-                      <input 
-                        type="file"
-                        accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                        onChange={(e)=>handleFileChange(index, e.target.files[0])}
-                        className="w-56 text-sm"
-                      />
+                      {/* Custom file input */}
+                      <label className="block w-56 px-3 py-2 text-sm text-gray-700 bg-gray-100 rounded cursor-pointer
+                                        dark:bg-gray-700 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600 transition">
+                        Pilih File
+                        <input
+                          type="file"
+                          accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                          onChange={(e)=>handleFileChange(index, e.target.files[0])}
+                          className="hidden"
+                        />
+                      </label>
                       {r.evidence && (
-                        <a href={r.evidence.url} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline block mt-1">
+                        <a
+                          href={r.evidence.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-blue-500 hover:underline block mt-1"
+                        >
                           {r.evidence.name}
                         </a>
                       )}
