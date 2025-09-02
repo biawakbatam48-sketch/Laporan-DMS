@@ -1,8 +1,35 @@
-import React, { useState } from "react";
-import * as XLSX from "xlsx";
+import { useState } from "react"
+import ExcelJS from "exceljs"
+import { saveAs } from "file-saver"
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts"
+import {
+  Plus,
+  FileSpreadsheet,
+  Moon,
+  Sun,
+} from "lucide-react"
 
 function App() {
-  const [reports, setReports] = useState([]);
+  const [darkMode, setDarkMode] = useState(false)
+  const [reports, setReports] = useState([
+    {
+      nama: "Andi",
+      tanggal: "2025-09-02",
+      agenda: "Meeting",
+      pekerjaan: "Review Project",
+      plan: "Selesai Review",
+      aktual: "Selesai",
+      status: "Done",
+      evidence: "https://via.placeholder.com/150"
+    }
+  ])
+
+  // Handle perubahan input
+  const handleChange = (index, field, value) => {
+    const newReports = [...reports]
+    newReports[index][field] = value
+    setReports(newReports)
+  }
 
   // Tambah baris baru
   const addRow = () => {
@@ -16,203 +43,161 @@ function App() {
         plan: "",
         aktual: "",
         status: "",
-        evidence: null, // simpan file / url
-      },
-    ]);
-  };
+        evidence: ""
+      }
+    ])
+  }
 
-  // Update cell teks
-  const handleChange = (index, field, value) => {
-    const updated = [...reports];
-    updated[index][field] = value;
-    setReports(updated);
-  };
+  // Export Excel dengan style tabel
+  const exportToExcel = async () => {
+    const workbook = new ExcelJS.Workbook()
+    const worksheet = workbook.addWorksheet("Laporan")
 
-  // Update evidence (gambar)
-  const handleFileChange = (index, file) => {
-    const updated = [...reports];
-    updated[index].evidence = file ? URL.createObjectURL(file) : null;
-    setReports(updated);
-  };
+    // Header
+    worksheet.addRow([
+      "Nama", "Tanggal", "Agenda", "Pekerjaan",
+      "Plan", "Aktual", "Status", "Evidence"
+    ])
 
-  // Hapus baris
-  const deleteRow = (index) => {
-    const updated = [...reports];
-    updated.splice(index, 1);
-    setReports(updated);
-  };
+    // Isi data
+    reports.forEach((r) => {
+      const row = worksheet.addRow([
+        r.nama, r.tanggal, r.agenda, r.pekerjaan,
+        r.plan, r.aktual, r.status, r.evidence || "",
+      ])
 
-  // Export ke Excel (dengan tabel & autofilter)
-  const exportToExcel = () => {
-    const worksheetData = [
-      ["Nama", "Tanggal", "Agenda", "Pekerjaan", "Plan", "Aktual", "Status", "Evidence"],
-      ...reports.map((r) => [
-        r.nama,
-        r.tanggal,
-        r.agenda,
-        r.pekerjaan,
-        r.plan,
-        r.aktual,
-        r.status,
-        r.evidence ? r.evidence : "",
-      ]),
-    ];
+      if (r.evidence) {
+        const cell = row.getCell(8)
+        cell.value = { text: "Lihat Bukti", hyperlink: r.evidence }
+        cell.font = { color: { argb: "FF0000FF" }, underline: true }
+      }
+    })
 
-    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+    // Style header
+    worksheet.getRow(1).eachCell((cell) => {
+      cell.font = { bold: true }
+      cell.alignment = { horizontal: "center", vertical: "middle" }
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD9D9D9" } }
+      cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } }
+    })
 
-    // Jadikan tabel dengan AutoFilter
-    worksheet["!autofilter"] = { ref: "A1:H" + worksheetData.length };
+    // Style isi tabel
+    worksheet.eachRow((row, rowNumber) => {
+      row.eachCell((cell) => {
+        cell.alignment = { horizontal: "center", vertical: "middle" }
+        cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } }
+      })
+    })
 
-    // Atur lebar kolom
-    worksheet["!cols"] = [
-      { wch: 20 }, // Nama
-      { wch: 15 }, // Tanggal
-      { wch: 20 }, // Agenda
-      { wch: 25 }, // Pekerjaan
-      { wch: 15 }, // Plan
-      { wch: 15 }, // Aktual
-      { wch: 12 }, // Status
-      { wch: 30 }, // Evidence
-    ];
+    worksheet.columns = [
+      { width: 20 }, { width: 15 }, { width: 20 }, { width: 25 },
+      { width: 15 }, { width: 15 }, { width: 12 }, { width: 40 }
+    ]
 
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan");
-    XLSX.writeFile(workbook, "laporan_dms.xlsx");
-  };
+    const buf = await workbook.xlsx.writeBuffer()
+    saveAs(new Blob([buf]), "laporan_dms.xlsx")
+  }
+
+  // Data untuk chart status
+  const chartData = [
+    { name: "Done", value: reports.filter(r => r.status === "Done").length },
+    { name: "Progress", value: reports.filter(r => r.status === "Progress").length },
+    { name: "Pending", value: reports.filter(r => r.status === "Pending").length }
+  ]
+  const COLORS = ["#10B981", "#FACC15", "#EF4444"]
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Laporan DMS</h1>
+    <div className={darkMode ? "bg-gray-900 text-white min-h-screen flex" : "bg-gray-100 text-gray-900 min-h-screen flex"}>
+      {/* Sidebar */}
+      <aside className="w-64 bg-blue-600 text-white p-6">
+        <h2 className="text-xl font-bold mb-6">📊 DMS Reports</h2>
+        <ul className="space-y-3">
+          <li>🏠 Dashboard</li>
+          <li>📝 Laporan</li>
+          <li>⚙️ Pengaturan</li>
+        </ul>
+      </aside>
 
-      {/* Filter */}
-      <div className="flex gap-4 mb-4">
-        <select className="border p-2 rounded">
-          <option>Harian</option>
-          <option>Mingguan</option>
-          <option>Bulanan</option>
-        </select>
-        <button
-          onClick={addRow}
-          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-        >
-          Tambah Laporan
-        </button>
-        <button
-          onClick={exportToExcel}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          Export Excel
-        </button>
+      {/* Main Content */}
+      <div className="flex-1 p-6">
+        {/* Navbar */}
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Laporan Harian / Mingguan / Bulanan</h1>
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className="p-2 rounded-full bg-gray-200 dark:bg-gray-700"
+          >
+            {darkMode ? <Sun size={20}/> : <Moon size={20}/>}
+          </button>
+        </div>
+
+        {/* Chart */}
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4 mb-6">
+          <h2 className="text-lg font-semibold mb-2">Status Laporan</h2>
+          <ResponsiveContainer width="100%" height={250}>
+            <PieChart>
+              <Pie data={chartData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80}>
+                {chartData.map((entry, index) => (
+                  <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Table */}
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-4">
+          <div className="flex gap-4 mb-4">
+            <button
+              onClick={addRow}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+            >
+              <Plus size={18}/> Tambah Laporan
+            </button>
+            <button
+              onClick={exportToExcel}
+              className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+            >
+              <FileSpreadsheet size={18}/> Export Excel
+            </button>
+          </div>
+
+          <table className="min-w-full border border-gray-300 dark:border-gray-700 rounded-lg">
+            <thead className="bg-gray-200 dark:bg-gray-700">
+              <tr>
+                {["Nama","Tanggal","Agenda","Pekerjaan","Plan","Aktual","Status","Evidence"].map((h,i)=>(
+                  <th key={i} className="px-4 py-2 text-center">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {reports.map((r,index)=>(
+                <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-600 transition">
+                  <td className="px-4 py-2">{r.nama}</td>
+                  <td className="px-4 py-2">{r.tanggal}</td>
+                  <td className="px-4 py-2">{r.agenda}</td>
+                  <td className="px-4 py-2">{r.pekerjaan}</td>
+                  <td className="px-4 py-2">{r.plan}</td>
+                  <td className="px-4 py-2">{r.aktual}</td>
+                  <td className="px-4 py-2">
+                    {r.status === "Done" && <span className="px-2 py-1 text-xs bg-green-100 text-green-700 rounded">Done</span>}
+                    {r.status === "Progress" && <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded">Progress</span>}
+                    {r.status === "Pending" && <span className="px-2 py-1 text-xs bg-red-100 text-red-700 rounded">Pending</span>}
+                  </td>
+                  <td className="px-4 py-2">
+                    {r.evidence ? (
+                      <a href={r.evidence} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">Lihat Bukti</a>
+                    ) : "-"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
-
-      {/* Tabel */}
-      <table className="table-auto border-collapse border border-gray-400 w-full">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="border px-2 py-1">Nama</th>
-            <th className="border px-2 py-1">Tanggal</th>
-            <th className="border px-2 py-1">Agenda</th>
-            <th className="border px-2 py-1">Pekerjaan</th>
-            <th className="border px-2 py-1">Plan</th>
-            <th className="border px-2 py-1">Aktual</th>
-            <th className="border px-2 py-1">Status</th>
-            <th className="border px-2 py-1">Evidence</th>
-            <th className="border px-2 py-1">Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          {reports.map((row, index) => (
-            <tr key={index}>
-              {/* Kolom teks biasa */}
-              <td className="border px-2 py-1">
-                <input
-                  type="text"
-                  value={row.nama}
-                  onChange={(e) => handleChange(index, "nama", e.target.value)}
-                  className="border px-2 py-1 w-full"
-                />
-              </td>
-              <td className="border px-2 py-1">
-                <input
-                  type="date"
-                  value={row.tanggal}
-                  onChange={(e) => handleChange(index, "tanggal", e.target.value)}
-                  className="border px-2 py-1 w-full"
-                />
-              </td>
-              <td className="border px-2 py-1">
-                <input
-                  type="text"
-                  value={row.agenda}
-                  onChange={(e) => handleChange(index, "agenda", e.target.value)}
-                  className="border px-2 py-1 w-full"
-                />
-              </td>
-              <td className="border px-2 py-1">
-                <input
-                  type="text"
-                  value={row.pekerjaan}
-                  onChange={(e) => handleChange(index, "pekerjaan", e.target.value)}
-                  className="border px-2 py-1 w-full"
-                />
-              </td>
-              <td className="border px-2 py-1">
-                <input
-                  type="text"
-                  value={row.plan}
-                  onChange={(e) => handleChange(index, "plan", e.target.value)}
-                  className="border px-2 py-1 w-full"
-                />
-              </td>
-              <td className="border px-2 py-1">
-                <input
-                  type="text"
-                  value={row.aktual}
-                  onChange={(e) => handleChange(index, "aktual", e.target.value)}
-                  className="border px-2 py-1 w-full"
-                />
-              </td>
-              <td className="border px-2 py-1">
-                <select
-                  value={row.status}
-                  onChange={(e) => handleChange(index, "status", e.target.value)}
-                  className="border px-2 py-1 w-full"
-                >
-                  <option value="">Pilih</option>
-                  <option value="Selesai">Selesai</option>
-                  <option value="Proses">Proses</option>
-                  <option value="Pending">Pending</option>
-                </select>
-              </td>
-              {/* Kolom Evidence */}
-              <td className="border px-2 py-1 text-center">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleFileChange(index, e.target.files[0])}
-                />
-                {row.evidence && (
-                  <img
-                    src={row.evidence}
-                    alt="evidence"
-                    className="mt-2 max-h-20 mx-auto"
-                  />
-                )}
-              </td>
-              <td className="border px-2 py-1 text-center">
-                <button
-                  onClick={() => deleteRow(index)}
-                  className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                >
-                  Hapus
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
-  );
+  )
 }
 
-export default App;
+export default App
