@@ -105,7 +105,23 @@ function App() {
           </h2>
           <ul className="space-y-4">
             <li className="cursor-pointer hover:text-yellow-300">🏠 Dashboard</li>
-            <li className="cursor-pointer hover:text-yellow-300">📝 Laporan</li>
+
+            {/* Laporan list */}
+            <li>
+              <div className="cursor-pointer hover:text-yellow-300 mb-2">📝 Laporan</div>
+              <ul className="ml-4 space-y-1 text-sm">
+                {reports.length === 0 ? (
+                  <li className="text-gray-300 italic">Belum ada laporan</li>
+                ) : (
+                  reports.map((r, i) => (
+                    <li key={i} className="truncate hover:text-yellow-300">
+                      📄 {r.nama || `Laporan ${i + 1}`}
+                    </li>
+                  ))
+                )}
+              </ul>
+            </li>
+
             <li className="cursor-pointer hover:text-yellow-300">⚙️ Pengaturan</li>
           </ul>
         </aside>
