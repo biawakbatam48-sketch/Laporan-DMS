@@ -1,6 +1,6 @@
-import { useState } from "react"
-import ExcelJS from "exceljs"
-import { saveAs } from "file-saver"
+import { useState } from "react";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 import {
   Plus,
   FileSpreadsheet,
@@ -9,35 +9,44 @@ import {
   Sun,
   ChevronDown,
   ChevronUp,
-} from "lucide-react"
+} from "lucide-react";
+import { supabase } from "./SupabaseClient";
+import Login from "./Login";
+import Register from "./Register";
 
 function App() {
-  const [darkMode, setDarkMode] = useState(false)
-  const [reports, setReports] = useState([])
-  const [activeReport, setActiveReport] = useState(null)
-  const [activePage, setActivePage] = useState("dashboard")
-  const [showForm, setShowForm] = useState(true)
-  const [showDetail, setShowDetail] = useState(true)
+  const [user, setUser] = useState(null); // user login
+  const [darkMode, setDarkMode] = useState(false);
+  const [reports, setReports] = useState([]);
+  const [activeReport, setActiveReport] = useState(null);
+  const [activePage, setActivePage] = useState("dashboard");
+  const [showForm, setShowForm] = useState(true);
+  const [showDetail, setShowDetail] = useState(true);
+
+  // hanya laporan user login
+  const userReports = reports.filter((r) => r.user_id === user?.id);
 
   const handleChange = (index, field, value) => {
-    const newReports = [...reports]
-    newReports[index][field] = value
-    setReports(newReports)
-  }
+    const newReports = [...reports];
+    newReports[index][field] = value;
+    setReports(newReports);
+  };
 
   const handleFileChange = (index, file) => {
     if (file) {
-      const fileURL = URL.createObjectURL(file)
-      const newReports = [...reports]
-      newReports[index].evidence = { name: file.name, url: fileURL }
-      setReports(newReports)
+      const fileURL = URL.createObjectURL(file);
+      const newReports = [...reports];
+      newReports[index].evidence = { name: file.name, url: fileURL };
+      setReports(newReports);
     }
-  }
+  };
 
   const addRow = () => {
+    if (!user) return;
     setReports([
       ...reports,
       {
+        user_id: user.id, // simpan user_id
         nama: "",
         tanggal: "",
         agenda: "",
@@ -47,19 +56,19 @@ function App() {
         status: "",
         evidence: null,
       },
-    ])
-  }
+    ]);
+  };
 
   const deleteRow = (index) => {
-    const newReports = [...reports]
-    newReports.splice(index, 1)
-    setReports(newReports)
-    if (activeReport === index) setActiveReport(null)
-  }
+    const newReports = [...reports];
+    newReports.splice(index, 1);
+    setReports(newReports);
+    if (activeReport === index) setActiveReport(null);
+  };
 
   const exportToExcel = async () => {
-    const workbook = new ExcelJS.Workbook()
-    const worksheet = workbook.addWorksheet("Laporan")
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Laporan");
 
     worksheet.addRow([
       "Nama",
@@ -70,9 +79,9 @@ function App() {
       "Aktual",
       "Status",
       "Evidence",
-    ])
+    ]);
 
-    reports.forEach((r) => {
+    userReports.forEach((r) => {
       const row = worksheet.addRow([
         r.nama,
         r.tanggal,
@@ -82,41 +91,41 @@ function App() {
         r.aktual,
         r.status,
         r.evidence ? r.evidence.name : "",
-      ])
+      ]);
       if (r.evidence) {
-        const cell = row.getCell(8)
-        cell.value = { text: r.evidence.name, hyperlink: r.evidence.url }
-        cell.font = { color: { argb: "FF0000FF" }, underline: true }
+        const cell = row.getCell(8);
+        cell.value = { text: r.evidence.name, hyperlink: r.evidence.url };
+        cell.font = { color: { argb: "FF0000FF" }, underline: true };
       }
-    })
+    });
 
     worksheet.getRow(1).eachCell((cell) => {
-      cell.font = { bold: true }
-      cell.alignment = { horizontal: "center", vertical: "middle" }
+      cell.font = { bold: true };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
       cell.fill = {
         type: "pattern",
         pattern: "solid",
         fgColor: { argb: "FFD9D9D9" },
-      }
+      };
       cell.border = {
         top: { style: "thin" },
         left: { style: "thin" },
         bottom: { style: "thin" },
         right: { style: "thin" },
-      }
-    })
+      };
+    });
 
     worksheet.eachRow((row) => {
       row.eachCell((cell) => {
-        cell.alignment = { horizontal: "center", vertical: "middle" }
+        cell.alignment = { horizontal: "center", vertical: "middle" };
         cell.border = {
           top: { style: "thin" },
           left: { style: "thin" },
           bottom: { style: "thin" },
           right: { style: "thin" },
-        }
-      })
-    })
+        };
+      });
+    });
 
     worksheet.columns = [
       { width: 30 },
@@ -127,10 +136,22 @@ function App() {
       { width: 20 },
       { width: 15 },
       { width: 40 },
-    ]
+    ];
 
-    const buf = await workbook.xlsx.writeBuffer()
-    saveAs(new Blob([buf]), "Laporan Harian CV Rangga.xlsx")
+    const buf = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buf]), "Laporan Harian CV Rangga.xlsx");
+  };
+
+  // jika belum login, tampilkan login/register
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+        <div className="w-full max-w-md p-6 bg-white dark:bg-gray-800 rounded-lg shadow space-y-6">
+          <Login onLogin={setUser} />
+          <Register />
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -140,9 +161,7 @@ function App() {
         <aside className="w-72 bg-gradient-to-b from-blue-700 to-blue-500 dark:from-gray-800 dark:to-gray-800 text-white p-6 shadow-lg">
           <h2 className="text-2xl font-bold mb-8 leading-snug">
             ALL TEAM <br />
-            <span className="text-sm font-medium">
-              Laporan Harian CV RANGGA
-            </span>
+            <span className="text-sm font-medium">Laporan Harian CV RANGGA</span>
           </h2>
           <ul className="space-y-4">
             <li
@@ -153,7 +172,6 @@ function App() {
             >
               🏠 Dashboard
             </li>
-
             <li>
               <div
                 className={`cursor-pointer hover:text-yellow-300 mb-2 ${
@@ -165,10 +183,10 @@ function App() {
               </div>
               {activePage === "laporan" && (
                 <ul className="ml-4 space-y-1 text-sm">
-                  {reports.length === 0 ? (
+                  {userReports.length === 0 ? (
                     <li className="text-gray-300 italic">Belum ada laporan</li>
                   ) : (
-                    reports.map((r, i) => (
+                    userReports.map((r, i) => (
                       <li
                         key={i}
                         onClick={() => setActiveReport(i)}
@@ -184,7 +202,6 @@ function App() {
                 </ul>
               )}
             </li>
-
             <li
               className={`cursor-pointer hover:text-yellow-300 ${
                 activePage === "pengaturan" ? "font-bold text-yellow-300" : ""
@@ -192,6 +209,12 @@ function App() {
               onClick={() => setActivePage("pengaturan")}
             >
               ⚙️ Pengaturan
+            </li>
+            <li
+              className="cursor-pointer hover:text-red-400 mt-6"
+              onClick={() => setUser(null)}
+            >
+              🔓 Logout
             </li>
           </ul>
         </aside>
@@ -214,7 +237,8 @@ function App() {
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
               <h2 className="text-lg font-semibold mb-3">📊 Dashboard</h2>
               <p className="text-gray-600 dark:text-gray-300">
-                Selamat datang di sistem laporan. Silakan pilih menu di sidebar.
+                Selamat datang, <b>{user.username}</b>. Silakan pilih menu di
+                sidebar.
               </p>
             </div>
           )}
@@ -248,82 +272,105 @@ function App() {
                       </button>
                     </div>
 
-                    {/* Tabel diubah ke grid form */}
-                    {reports.map((r, index) => (
+                    {/* Tabel laporan */}
+                    {userReports.map((r, index) => (
                       <div
                         key={index}
                         className="grid grid-cols-2 gap-6 p-4 border rounded-lg mb-4 dark:border-gray-700 bg-gray-50 dark:bg-gray-700"
                       >
-                        {/* Kolom Kiri */}
+                        {/* Kolom kiri */}
                         <div>
                           <label className="block mb-1">Nama</label>
                           <input
                             type="text"
                             value={r.nama}
                             onChange={(e) =>
-                              handleChange(index, "nama", e.target.value)
+                              handleChange(
+                                reports.findIndex((rep) => rep === r),
+                                "nama",
+                                e.target.value
+                              )
                             }
                             className="w-full p-2 border rounded bg-white dark:bg-gray-800"
                           />
-
                           <label className="block mt-3 mb-1">Tanggal</label>
                           <input
                             type="date"
                             value={r.tanggal}
                             onChange={(e) =>
-                              handleChange(index, "tanggal", e.target.value)
+                              handleChange(
+                                reports.findIndex((rep) => rep === r),
+                                "tanggal",
+                                e.target.value
+                              )
                             }
                             className="w-full p-2 border rounded bg-white dark:bg-gray-800"
                           />
-
                           <label className="block mt-3 mb-1">Agenda</label>
                           <input
                             type="text"
                             value={r.agenda}
                             onChange={(e) =>
-                              handleChange(index, "agenda", e.target.value)
+                              handleChange(
+                                reports.findIndex((rep) => rep === r),
+                                "agenda",
+                                e.target.value
+                              )
                             }
                             className="w-full p-2 border rounded bg-white dark:bg-gray-800"
                           />
-
                           <label className="block mt-3 mb-1">Pekerjaan</label>
                           <input
                             type="text"
                             value={r.pekerjaan}
                             onChange={(e) =>
-                              handleChange(index, "pekerjaan", e.target.value)
+                              handleChange(
+                                reports.findIndex((rep) => rep === r),
+                                "pekerjaan",
+                                e.target.value
+                              )
                             }
                             className="w-full p-2 border rounded bg-white dark:bg-gray-800"
                           />
                         </div>
 
-                        {/* Kolom Kanan */}
+                        {/* Kolom kanan */}
                         <div>
                           <label className="block mb-1">Plan</label>
                           <input
                             type="text"
                             value={r.plan}
                             onChange={(e) =>
-                              handleChange(index, "plan", e.target.value)
+                              handleChange(
+                                reports.findIndex((rep) => rep === r),
+                                "plan",
+                                e.target.value
+                              )
                             }
                             className="w-full p-2 border rounded bg-white dark:bg-gray-800"
                           />
-
                           <label className="block mt-3 mb-1">Aktual</label>
                           <input
                             type="text"
                             value={r.aktual}
                             onChange={(e) =>
-                              handleChange(index, "aktual", e.target.value)
+                              handleChange(
+                                reports.findIndex((rep) => rep === r),
+                                "aktual",
+                                e.target.value
+                              )
                             }
                             className="w-full p-2 border rounded bg-white dark:bg-gray-800"
                           />
-
                           <label className="block mt-3 mb-1">Status</label>
                           <select
                             value={r.status}
                             onChange={(e) =>
-                              handleChange(index, "status", e.target.value)
+                              handleChange(
+                                reports.findIndex((rep) => rep === r),
+                                "status",
+                                e.target.value
+                              )
                             }
                             className="w-full p-2 border rounded bg-white dark:bg-gray-800"
                           >
@@ -332,13 +379,15 @@ function App() {
                             <option value="Progress">Progress</option>
                             <option value="Pending">Pending</option>
                           </select>
-
                           <label className="block mt-3 mb-1">Evidence</label>
                           <input
                             type="file"
                             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
                             onChange={(e) =>
-                              handleFileChange(index, e.target.files[0])
+                              handleFileChange(
+                                reports.findIndex((rep) => rep === r),
+                                e.target.files[0]
+                              )
                             }
                             className="w-full text-sm"
                           />
@@ -357,7 +406,9 @@ function App() {
 
                         <div className="col-span-2 text-right">
                           <button
-                            onClick={() => deleteRow(index)}
+                            onClick={() =>
+                              deleteRow(reports.findIndex((rep) => rep === r))
+                            }
                             className="p-2 bg-red-500 text-white rounded hover:bg-red-600"
                           >
                             <Trash2 size={16} />
@@ -370,7 +421,7 @@ function App() {
               </div>
 
               {/* Detail laporan */}
-              {activeReport !== null && reports[activeReport] && (
+              {activeReport !== null && userReports[activeReport] && (
                 <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
                   <button
                     onClick={() => setShowDetail(!showDetail)}
@@ -382,24 +433,24 @@ function App() {
                   {showDetail && (
                     <div className="p-5 divide-y divide-gray-200 dark:divide-gray-700">
                       {[
-                        { label: "Nama", value: reports[activeReport].nama },
-                        { label: "Tanggal", value: reports[activeReport].tanggal },
-                        { label: "Agenda", value: reports[activeReport].agenda },
-                        { label: "Pekerjaan", value: reports[activeReport].pekerjaan },
-                        { label: "Plan", value: reports[activeReport].plan },
-                        { label: "Aktual", value: reports[activeReport].aktual },
-                        { label: "Status", value: reports[activeReport].status },
+                        { label: "Nama", value: userReports[activeReport].nama },
+                        { label: "Tanggal", value: userReports[activeReport].tanggal },
+                        { label: "Agenda", value: userReports[activeReport].agenda },
+                        { label: "Pekerjaan", value: userReports[activeReport].pekerjaan },
+                        { label: "Plan", value: userReports[activeReport].plan },
+                        { label: "Aktual", value: userReports[activeReport].aktual },
+                        { label: "Status", value: userReports[activeReport].status },
                         {
                           label: "Evidence",
-                          value: reports[activeReport].evidence ? (
+                          value: userReports[activeReport].evidence ? (
                             <a
-                              href={reports[activeReport].evidence.url}
+                              href={userReports[activeReport].evidence.url}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-blue-500 hover:underline truncate max-w-[200px] inline-block"
-                              title={reports[activeReport].evidence.name}
+                              title={userReports[activeReport].evidence.name}
                             >
-                              {reports[activeReport].evidence.name}
+                              {userReports[activeReport].evidence.name}
                             </a>
                           ) : (
                             "-"
@@ -441,7 +492,7 @@ function App() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
