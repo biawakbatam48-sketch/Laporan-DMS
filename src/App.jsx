@@ -10,12 +10,8 @@ import {
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
-import { supabase } from "./SupabaseClient";
-import Login from "./Login";
-import Register from "./Register";
 
 function App() {
-  const [user, setUser] = useState(null); // user login
   const [darkMode, setDarkMode] = useState(false);
   const [reports, setReports] = useState([]);
   const [activeReport, setActiveReport] = useState(null);
@@ -23,9 +19,9 @@ function App() {
   const [showForm, setShowForm] = useState(true);
   const [showDetail, setShowDetail] = useState(true);
 
-  // hanya laporan user login
-  const userReports = reports.filter((r) => r.user_id === user?.id);
+  const [user, setUser] = useState(null); // user login state
 
+  // --------- LAPORAN HANDLER ---------
   const handleChange = (index, field, value) => {
     const newReports = [...reports];
     newReports[index][field] = value;
@@ -42,11 +38,9 @@ function App() {
   };
 
   const addRow = () => {
-    if (!user) return;
     setReports([
       ...reports,
       {
-        user_id: user.id, // simpan user_id
         nama: "",
         tanggal: "",
         agenda: "",
@@ -81,7 +75,7 @@ function App() {
       "Evidence",
     ]);
 
-    userReports.forEach((r) => {
+    reports.forEach((r) => {
       const row = worksheet.addRow([
         r.nama,
         r.tanggal,
@@ -142,18 +136,35 @@ function App() {
     saveAs(new Blob([buf]), "Laporan Harian CV Rangga.xlsx");
   };
 
-  // jika belum login, tampilkan login/register
+  // --------- LOGOUT HANDLER ---------
+  const handleLogout = () => setUser(null);
+
+  // ---------- RENDER ----------
   if (!user) {
+    // Tampilkan login/register kalau belum login
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
-        <div className="w-full max-w-md p-6 bg-white dark:bg-gray-800 rounded-lg shadow space-y-6">
-          <Login onLogin={setUser} />
-          <Register />
+      <div className={darkMode ? "dark" : ""}>
+        <div className="min-h-screen flex justify-center items-center bg-gray-100 dark:bg-gray-900">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded shadow w-96">
+            <h1 className="text-2xl font-bold mb-4 text-center">Laporan DMS</h1>
+            <Login onLogin={setUser} />
+            <div className="my-4 border-t border-gray-300 dark:border-gray-600"></div>
+            <Register />
+            <div className="mt-4 text-center">
+              <button
+                onClick={() => setDarkMode(!darkMode)}
+                className="p-2 bg-gray-200 dark:bg-gray-700 rounded"
+              >
+                {darkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
+  // Jika sudah login, tampilkan dashboard/laporan
   return (
     <div className={darkMode ? "dark" : ""}>
       <div className="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen flex">
@@ -183,10 +194,10 @@ function App() {
               </div>
               {activePage === "laporan" && (
                 <ul className="ml-4 space-y-1 text-sm">
-                  {userReports.length === 0 ? (
+                  {reports.length === 0 ? (
                     <li className="text-gray-300 italic">Belum ada laporan</li>
                   ) : (
-                    userReports.map((r, i) => (
+                    reports.map((r, i) => (
                       <li
                         key={i}
                         onClick={() => setActiveReport(i)}
@@ -210,11 +221,8 @@ function App() {
             >
               ⚙️ Pengaturan
             </li>
-            <li
-              className="cursor-pointer hover:text-red-400 mt-6"
-              onClick={() => setUser(null)}
-            >
-              🔓 Logout
+            <li className="cursor-pointer hover:text-red-400 mt-4" onClick={handleLogout}>
+              🔒 Logout ({user.username})
             </li>
           </ul>
         </aside>
@@ -237,8 +245,7 @@ function App() {
             <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
               <h2 className="text-lg font-semibold mb-3">📊 Dashboard</h2>
               <p className="text-gray-600 dark:text-gray-300">
-                Selamat datang, <b>{user.username}</b>. Silakan pilih menu di
-                sidebar.
+                Selamat datang, <strong>{user.username}</strong>. Silakan pilih menu di sidebar.
               </p>
             </div>
           )}
@@ -273,105 +280,61 @@ function App() {
                     </div>
 
                     {/* Tabel laporan */}
-                    {userReports.map((r, index) => (
+                    {reports.map((r, index) => (
                       <div
                         key={index}
                         className="grid grid-cols-2 gap-6 p-4 border rounded-lg mb-4 dark:border-gray-700 bg-gray-50 dark:bg-gray-700"
                       >
-                        {/* Kolom kiri */}
                         <div>
                           <label className="block mb-1">Nama</label>
                           <input
                             type="text"
                             value={r.nama}
-                            onChange={(e) =>
-                              handleChange(
-                                reports.findIndex((rep) => rep === r),
-                                "nama",
-                                e.target.value
-                              )
-                            }
+                            onChange={(e) => handleChange(index, "nama", e.target.value)}
                             className="w-full p-2 border rounded bg-white dark:bg-gray-800"
                           />
                           <label className="block mt-3 mb-1">Tanggal</label>
                           <input
                             type="date"
                             value={r.tanggal}
-                            onChange={(e) =>
-                              handleChange(
-                                reports.findIndex((rep) => rep === r),
-                                "tanggal",
-                                e.target.value
-                              )
-                            }
+                            onChange={(e) => handleChange(index, "tanggal", e.target.value)}
                             className="w-full p-2 border rounded bg-white dark:bg-gray-800"
                           />
                           <label className="block mt-3 mb-1">Agenda</label>
                           <input
                             type="text"
                             value={r.agenda}
-                            onChange={(e) =>
-                              handleChange(
-                                reports.findIndex((rep) => rep === r),
-                                "agenda",
-                                e.target.value
-                              )
-                            }
+                            onChange={(e) => handleChange(index, "agenda", e.target.value)}
                             className="w-full p-2 border rounded bg-white dark:bg-gray-800"
                           />
                           <label className="block mt-3 mb-1">Pekerjaan</label>
                           <input
                             type="text"
                             value={r.pekerjaan}
-                            onChange={(e) =>
-                              handleChange(
-                                reports.findIndex((rep) => rep === r),
-                                "pekerjaan",
-                                e.target.value
-                              )
-                            }
+                            onChange={(e) => handleChange(index, "pekerjaan", e.target.value)}
                             className="w-full p-2 border rounded bg-white dark:bg-gray-800"
                           />
                         </div>
 
-                        {/* Kolom kanan */}
                         <div>
                           <label className="block mb-1">Plan</label>
                           <input
                             type="text"
                             value={r.plan}
-                            onChange={(e) =>
-                              handleChange(
-                                reports.findIndex((rep) => rep === r),
-                                "plan",
-                                e.target.value
-                              )
-                            }
+                            onChange={(e) => handleChange(index, "plan", e.target.value)}
                             className="w-full p-2 border rounded bg-white dark:bg-gray-800"
                           />
                           <label className="block mt-3 mb-1">Aktual</label>
                           <input
                             type="text"
                             value={r.aktual}
-                            onChange={(e) =>
-                              handleChange(
-                                reports.findIndex((rep) => rep === r),
-                                "aktual",
-                                e.target.value
-                              )
-                            }
+                            onChange={(e) => handleChange(index, "aktual", e.target.value)}
                             className="w-full p-2 border rounded bg-white dark:bg-gray-800"
                           />
                           <label className="block mt-3 mb-1">Status</label>
                           <select
                             value={r.status}
-                            onChange={(e) =>
-                              handleChange(
-                                reports.findIndex((rep) => rep === r),
-                                "status",
-                                e.target.value
-                              )
-                            }
+                            onChange={(e) => handleChange(index, "status", e.target.value)}
                             className="w-full p-2 border rounded bg-white dark:bg-gray-800"
                           >
                             <option value="">Pilih</option>
@@ -383,12 +346,7 @@ function App() {
                           <input
                             type="file"
                             accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                            onChange={(e) =>
-                              handleFileChange(
-                                reports.findIndex((rep) => rep === r),
-                                e.target.files[0]
-                              )
-                            }
+                            onChange={(e) => handleFileChange(index, e.target.files[0])}
                             className="w-full text-sm"
                           />
                           {r.evidence && (
@@ -406,9 +364,7 @@ function App() {
 
                         <div className="col-span-2 text-right">
                           <button
-                            onClick={() =>
-                              deleteRow(reports.findIndex((rep) => rep === r))
-                            }
+                            onClick={() => deleteRow(index)}
                             className="p-2 bg-red-500 text-white rounded hover:bg-red-600"
                           >
                             <Trash2 size={16} />
@@ -421,7 +377,7 @@ function App() {
               </div>
 
               {/* Detail laporan */}
-              {activeReport !== null && userReports[activeReport] && (
+              {activeReport !== null && reports[activeReport] && (
                 <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
                   <button
                     onClick={() => setShowDetail(!showDetail)}
@@ -433,24 +389,24 @@ function App() {
                   {showDetail && (
                     <div className="p-5 divide-y divide-gray-200 dark:divide-gray-700">
                       {[
-                        { label: "Nama", value: userReports[activeReport].nama },
-                        { label: "Tanggal", value: userReports[activeReport].tanggal },
-                        { label: "Agenda", value: userReports[activeReport].agenda },
-                        { label: "Pekerjaan", value: userReports[activeReport].pekerjaan },
-                        { label: "Plan", value: userReports[activeReport].plan },
-                        { label: "Aktual", value: userReports[activeReport].aktual },
-                        { label: "Status", value: userReports[activeReport].status },
+                        { label: "Nama", value: reports[activeReport].nama },
+                        { label: "Tanggal", value: reports[activeReport].tanggal },
+                        { label: "Agenda", value: reports[activeReport].agenda },
+                        { label: "Pekerjaan", value: reports[activeReport].pekerjaan },
+                        { label: "Plan", value: reports[activeReport].plan },
+                        { label: "Aktual", value: reports[activeReport].aktual },
+                        { label: "Status", value: reports[activeReport].status },
                         {
                           label: "Evidence",
-                          value: userReports[activeReport].evidence ? (
+                          value: reports[activeReport].evidence ? (
                             <a
-                              href={userReports[activeReport].evidence.url}
+                              href={reports[activeReport].evidence.url}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-blue-500 hover:underline truncate max-w-[200px] inline-block"
-                              title={userReports[activeReport].evidence.name}
+                              title={reports[activeReport].evidence.name}
                             >
-                              {userReports[activeReport].evidence.name}
+                              {reports[activeReport].evidence.name}
                             </a>
                           ) : (
                             "-"
