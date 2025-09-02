@@ -5,7 +5,8 @@
   "scripts": {
   "dev": "vite",
   "build": "npx vite build",
-  "preview": "npx vite preview"
+  "preview": "vite preview",
+  "postinstall": "chmod +x node_modules/.bin/vite || true"
   },
   "dependencies": {
     "framer-motion": "^11.0.0",
