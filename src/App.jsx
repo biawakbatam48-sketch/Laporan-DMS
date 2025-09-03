@@ -56,7 +56,17 @@ function App() {
   const addRow = () => {
     setReports([
       ...reports,
-      { nama: "", tanggal: "", agenda: "", pekerjaan: "", plan: "", aktual: "", status: "", evidence: null },
+      {
+        nama: "",
+        tanggal: "",
+        site: "", // Tambah field Site
+        agenda: "",
+        pekerjaan: "",
+        plan: "",
+        aktual: "",
+        status: "",
+        evidence: null,
+      },
     ])
   }
 
@@ -78,7 +88,7 @@ function App() {
 
   const exportToExcel = async () => {
     for (let r of reports) {
-      if (!r.nama || !r.tanggal || !r.agenda || !r.pekerjaan || !r.status) {
+      if (!r.nama || !r.tanggal || !r.agenda || !r.pekerjaan || !r.status || !r.site) {
         alert("Semua field wajib diisi sebelum export Excel!")
         return
       }
@@ -86,12 +96,32 @@ function App() {
 
     const workbook = new ExcelJS.Workbook()
     const worksheet = workbook.addWorksheet("Laporan")
-    worksheet.addRow(["Nama", "Tanggal", "Agenda", "Pekerjaan", "Plan", "Aktual", "Status", "Evidence"])
+    worksheet.addRow([
+      "Nama",
+      "Tanggal",
+      "Site", // Tambah Site di header
+      "Agenda",
+      "Pekerjaan",
+      "Plan",
+      "Aktual",
+      "Status",
+      "Evidence",
+    ])
 
     reports.forEach((r) => {
-      const row = worksheet.addRow([r.nama, r.tanggal, r.agenda, r.pekerjaan, r.plan, r.aktual, r.status, r.evidence ? r.evidence.name : ""])
+      const row = worksheet.addRow([
+        r.nama,
+        r.tanggal,
+        r.site, // Tambah Site di row
+        r.agenda,
+        r.pekerjaan,
+        r.plan,
+        r.aktual,
+        r.status,
+        r.evidence ? r.evidence.name : "",
+      ])
       if (r.evidence) {
-        const cell = row.getCell(8)
+        const cell = row.getCell(9)
         cell.value = { text: r.evidence.name, hyperlink: r.evidence.url }
         cell.font = { color: { argb: "FF0000FF" }, underline: true }
       }
@@ -101,26 +131,45 @@ function App() {
       cell.font = { bold: true }
       cell.alignment = { horizontal: "center", vertical: "middle" }
       cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD9D9D9" } }
-      cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } }
+      cell.border = {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
+      }
     })
 
     worksheet.eachRow((row) => {
       row.eachCell((cell) => {
         cell.alignment = { horizontal: "center", vertical: "middle" }
-        cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } }
+        cell.border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
+        }
       })
     })
 
     worksheet.columns = [
-      { width: 30 }, { width: 20 }, { width: 25 }, { width: 30 },
-      { width: 20 }, { width: 20 }, { width: 15 }, { width: 40 },
+      { width: 30 },
+      { width: 20 },
+      { width: 20 }, // Site
+      { width: 25 },
+      { width: 30 },
+      { width: 20 },
+      { width: 20 },
+      { width: 15 },
+      { width: 40 },
     ]
 
     const buf = await workbook.xlsx.writeBuffer()
     saveAs(new Blob([buf]), "Laporan Harian CV Rangga.xlsx")
   }
 
-  const filteredReports = reports.filter((r) => r.nama.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredReports = reports.filter((r) =>
+    r.nama.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   return (
     <div className={`${darkMode ? "dark" : ""} transition-colors duration-500`}>
@@ -133,14 +182,18 @@ function App() {
           </h2>
           <ul className="space-y-4">
             <li
-              className={`cursor-pointer hover:text-yellow-300 ${activePage === "dashboard" ? "font-bold text-yellow-300" : ""}`}
+              className={`cursor-pointer hover:text-yellow-300 ${
+                activePage === "dashboard" ? "font-bold text-yellow-300" : ""
+              }`}
               onClick={() => setActivePage("dashboard")}
             >
               🏠 Dashboard
             </li>
             <li>
               <div
-                className={`cursor-pointer hover:text-yellow-300 mb-2 ${activePage === "laporan" ? "font-bold text-yellow-300" : ""}`}
+                className={`cursor-pointer hover:text-yellow-300 mb-2 ${
+                  activePage === "laporan" ? "font-bold text-yellow-300" : ""
+                }`}
                 onClick={() => setActivePage("laporan")}
               >
                 📝 Laporan
@@ -154,7 +207,9 @@ function App() {
                       <li
                         key={i}
                         onClick={() => setActiveReport(i)}
-                        className={`truncate cursor-pointer hover:text-yellow-300 ${activeReport === i ? "font-bold text-yellow-300" : ""}`}
+                        className={`truncate cursor-pointer hover:text-yellow-300 ${
+                          activeReport === i ? "font-bold text-yellow-300" : ""
+                        }`}
                         title={r.nama}
                       >
                         📄 {r.nama || `Laporan ${i + 1}`}
@@ -165,7 +220,9 @@ function App() {
               )}
             </li>
             <li
-              className={`cursor-pointer hover:text-yellow-300 ${activePage === "pengaturan" ? "font-bold text-yellow-300" : ""}`}
+              className={`cursor-pointer hover:text-yellow-300 ${
+                activePage === "pengaturan" ? "font-bold text-yellow-300" : ""
+              }`}
               onClick={() => setActivePage("pengaturan")}
             >
               ⚙️ Pengaturan
@@ -203,7 +260,8 @@ function App() {
                 Selamat datang di sistem laporan. Silakan pilih menu di sidebar.
               </p>
               <p className="text-gray-700 dark:text-gray-200 mb-4 font-medium">
-                Persentase laporan yang telah dibuat: <span className="font-bold">{reportPercentage}%</span>
+                Persentase laporan yang telah dibuat:{" "}
+                <span className="font-bold">{reportPercentage}%</span>
               </p>
               <div className="w-full h-64 transition-colors duration-500">
                 <ResponsiveContainer>
@@ -261,7 +319,10 @@ function App() {
                     </div>
 
                     {filteredReports.map((r, index) => (
-                      <div key={index} className="mb-4 border rounded-lg dark:border-gray-700 bg-gray-50 dark:bg-gray-700 transition-colors duration-500">
+                      <div
+                        key={index}
+                        className="mb-4 border rounded-lg dark:border-gray-700 bg-gray-50 dark:bg-gray-700 transition-colors duration-500"
+                      >
                         {/* Header */}
                         <div
                           className="flex justify-between items-center p-4 cursor-pointer bg-gray-200 dark:bg-gray-800 transition-colors duration-500"
@@ -287,6 +348,7 @@ function App() {
                                 onChange={(e) => handleChange(index, "nama", e.target.value)}
                                 className="w-full p-2 border rounded bg-white dark:bg-gray-800 transition-colors duration-500"
                               />
+
                               <label className="block mt-3 mb-1">Tanggal</label>
                               <input
                                 type="date"
@@ -294,6 +356,28 @@ function App() {
                                 onChange={(e) => handleChange(index, "tanggal", e.target.value)}
                                 className="w-full p-2 border rounded bg-white dark:bg-gray-800 transition-colors duration-500"
                               />
+
+                              <label className="block mt-3 mb-1">Site</label>
+                              <select
+                                value={r.site}
+                                onChange={(e) => handleChange(index, "site", e.target.value)}
+                                className="w-full p-2 border rounded bg-white dark:bg-gray-800 transition-colors duration-500"
+                              >
+                                <option value="">Pilih Site</option>
+                                <option value="BMO I">BMO I</option>
+                                <option value="BMO II">BMO II</option>
+                                <option value="BMO III">BMO III</option>
+                                <option value="PMO">PMO</option>
+                                <option value="GMO">GMO</option>
+                                <option value="LMO">LMO</option>
+                                <option value="SMO">SMO</option>
+                                <option value="Office KDC">Office KDC</option>
+                                <option value="HO">HO</option>
+                                <option value="Mess CV. Rangga">Mess CV. Rangga</option>
+                                <option value="Area Tanjung">Area Tanjung</option>
+                                <option value="Mess Pama">Mess Pama</option>
+                              </select>
+
                               <label className="block mt-3 mb-1">Agenda</label>
                               <input
                                 type="text"
@@ -301,6 +385,7 @@ function App() {
                                 onChange={(e) => handleChange(index, "agenda", e.target.value)}
                                 className="w-full p-2 border rounded bg-white dark:bg-gray-800 transition-colors duration-500"
                               />
+
                               <label className="block mt-3 mb-1">Pekerjaan</label>
                               <input
                                 type="text"
@@ -396,6 +481,7 @@ function App() {
                       {[
                         { label: "Nama", value: reports[activeReport].nama },
                         { label: "Tanggal", value: reports[activeReport].tanggal },
+                        { label: "Site", value: reports[activeReport].site },
                         { label: "Agenda", value: reports[activeReport].agenda },
                         { label: "Pekerjaan", value: reports[activeReport].pekerjaan },
                         { label: "Plan", value: reports[activeReport].plan },
