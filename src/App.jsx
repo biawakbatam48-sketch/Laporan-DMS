@@ -9,6 +9,9 @@ import {
   Sun,
   ChevronDown,
   ChevronUp,
+  Home,
+  FileText,
+  Settings,
 } from "lucide-react"
 import { PieChart, Pie, Cell, Legend, Tooltip, ResponsiveContainer } from "recharts"
 
@@ -21,6 +24,7 @@ function App() {
   const [showDetail, setShowDetail] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
   const [expandedRows, setExpandedRows] = useState({})
+  const [showSubmenu, setShowSubmenu] = useState(true)
 
   const chartData = [
     { name: "Done", value: reports.filter((r) => r.status === "Done").length },
@@ -99,7 +103,7 @@ function App() {
     worksheet.addRow([
       "Nama",
       "Tanggal",
-      "Site", // Tambah Site di header
+      "Site",
       "Agenda",
       "Pekerjaan",
       "Plan",
@@ -112,7 +116,7 @@ function App() {
       const row = worksheet.addRow([
         r.nama,
         r.tanggal,
-        r.site, // Tambah Site di row
+        r.site,
         r.agenda,
         r.pekerjaan,
         r.plan,
@@ -154,7 +158,7 @@ function App() {
     worksheet.columns = [
       { width: 30 },
       { width: 20 },
-      { width: 20 }, // Site
+      { width: 20 },
       { width: 25 },
       { width: 30 },
       { width: 20 },
@@ -175,82 +179,85 @@ function App() {
     <div className={`${darkMode ? "dark" : ""} transition-colors duration-500`}>
       <div className="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen flex flex-col md:flex-row transition-colors duration-500">
         {/* Sidebar */}
-        <aside className="w-full md:w-72 bg-gradient-to-br from-purple-600 via-pink-500 to-red-500 text-white p-6 shadow-lg rounded-tr-3xl rounded-br-3xl transition-colors duration-500">
-          <h2 className="text-2xl font-bold mb-8 leading-snug text-white">
-            ALL TEAM <br />
-            <span className="text-sm font-medium">Laporan Harian CV RANGGA</span>
-          </h2>
-          <ul className="space-y-4">
-            <li
-              className={`cursor-pointer hover:text-yellow-300 ${
-                activePage === "dashboard" ? "font-bold text-yellow-300" : ""
+                <aside className="w-full md:w-72 bg-gradient-to-br from-purple-600 via-pink-500 to-red-500 text-white p-6 shadow-xl rounded-tr-3xl rounded-br-3xl backdrop-blur-md bg-opacity-90 transition-colors duration-500">
+        <h2 className="text-2xl font-extrabold mb-10 leading-snug tracking-wide">
+          ALL TEAM <br />
+          <span className="text-sm font-medium opacity-90">Laporan Harian CV RANGGA</span>
+        </h2>
+        <ul className="space-y-3">
+          <li
+            className={`flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg transition-all duration-300 hover:bg-white/20 ${
+              activePage === "dashboard" ? "bg-white/30 font-bold" : ""
+            }`}
+            onClick={() => setActivePage("dashboard")}
+          >
+            <Home size={18} /> Dashboard
+          </li>
+          <li>
+            <div
+              className={`flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg transition-all duration-300 hover:bg-white/20 ${
+                activePage === "laporan" ? "bg-white/30 font-bold" : ""
               }`}
-              onClick={() => setActivePage("dashboard")}
+              onClick={() => setActivePage("laporan")}
             >
-              🏠 Dashboard
-            </li>
-            <li>
-              <div
-                className={`cursor-pointer hover:text-yellow-300 mb-2 ${
-                  activePage === "laporan" ? "font-bold text-yellow-300" : ""
-                }`}
-                onClick={() => setActivePage("laporan")}
-              >
-                📝 Laporan
-              </div>
-              {activePage === "laporan" && (
-                <ul className="ml-4 space-y-1 text-sm">
-                  {reports.length === 0 ? (
-                    <li className="text-gray-300 italic">Belum ada laporan</li>
-                  ) : (
-                    filteredReports.map((r, i) => (
-                      <li
-                        key={i}
-                        onClick={() => setActiveReport(i)}
-                        className={`truncate cursor-pointer hover:text-yellow-300 ${
-                          activeReport === i ? "font-bold text-yellow-300" : ""
-                        }`}
-                        title={r.nama}
-                      >
-                        📄 {r.nama || `Laporan ${i + 1}`}
-                      </li>
-                    ))
-                  )}
-                </ul>
-              )}
-            </li>
-            <li
-              className={`cursor-pointer hover:text-yellow-300 ${
-                activePage === "pengaturan" ? "font-bold text-yellow-300" : ""
-              }`}
-              onClick={() => setActivePage("pengaturan")}
-            >
-              ⚙️ Pengaturan
-            </li>
-          </ul>
-        </aside>
+              <FileText size={18} /> Laporan
+            </div>
+            {activePage === "laporan" && (
+              <ul className="ml-6 mt-2 space-y-1 text-sm">
+                {reports.length === 0 ? (
+                  <li className="text-gray-200 italic">Belum ada laporan</li>
+                ) : (
+                  filteredReports.map((r, i) => (
+                    <li
+                      key={i}
+                      onClick={() => setActiveReport(i)}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer truncate transition-all duration-300 hover:bg-white/20 ${
+                        activeReport === i ? "bg-white/30 font-semibold" : ""
+                      }`}
+                      title={r.nama}
+                    >
+                      <FileSpreadsheet size={16} /> {r.nama || `Laporan ${i + 1}`}
+                    </li>
+                  ))
+                )}
+              </ul>
+
+            )}
+          </li>
+          <li
+            className={`flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg transition-all duration-300 hover:bg-white/20 ${
+              activePage === "pengaturan" ? "bg-white/30 font-bold" : ""
+            }`}
+            onClick={() => setActivePage("pengaturan")}
+          >
+            <Settings size={18} /> Pengaturan
+          </li>
+        </ul>
+      </aside>
+
 
         {/* Main Content */}
         <div className="flex-1 p-6 transition-colors duration-500">
           {/* Navbar */}
-          <div className="flex justify-between items-center mb-6 bg-white dark:bg-gray-800 shadow rounded-lg px-6 py-3 flex-wrap gap-4 transition-colors duration-500">
-            <h1 className="text-xl font-semibold capitalize">📌 {activePage}</h1>
-            <div className="flex gap-4 flex-wrap">
-              <input
-                type="text"
-                placeholder="🔍 Search nama"
-                className="px-3 py-2 border rounded w-48 dark:bg-gray-700 dark:text-white transition-colors duration-500"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              <button
-                onClick={() => setDarkMode(!darkMode)}
-                className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:scale-105 transition"
-              >
-                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-              </button>
-            </div>
+        <div className="flex justify-between items-center mb-6 bg-white dark:bg-gray-800 shadow rounded-2xl px-6 py-3 flex-wrap gap-4 transition-colors duration-500">
+          <h1 className="text-xl font-bold capitalize tracking-wide">📌 {activePage}</h1>
+          <div className="flex gap-3 flex-wrap items-center">
+            <input
+              type="text"
+              placeholder="🔍 Cari nama laporan..."
+              className="px-4 py-2 border rounded-lg w-56 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-400 transition-colors duration-500"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:scale-110 transition-transform shadow"
+            >
+              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
           </div>
+        </div>
+
 
           {/* Dashboard */}
           {activePage === "dashboard" && (
