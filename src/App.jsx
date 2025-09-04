@@ -59,7 +59,7 @@ function App() {
       {
         nama: "",
         tanggal: "",
-        site: "", // Tambah field Site
+        site: "",
         agenda: "",
         pekerjaan: "",
         plan: "",
