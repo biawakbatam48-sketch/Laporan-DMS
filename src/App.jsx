@@ -93,7 +93,7 @@ function App() {
   const exportToExcel = async () => {
     for (let r of reports) {
       if (!r.nama || !r.tanggal || !r.agenda || !r.pekerjaan || !r.status || !r.site) {
-        alert("Semua field wajib diisi sebelum export Excel!")
+        alert("Semua kolom harus diisi sebelum export ke Excel")
         return
       }
     }
