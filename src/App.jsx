@@ -1,6 +1,8 @@
 import { useState } from "react"
 import ExcelJS from "exceljs"
 import { saveAs } from "file-saver"
+import { motion, AnimatePresence } from "framer-motion"
+
 import {
   Plus,
   FileSpreadsheet,
@@ -12,7 +14,7 @@ import {
   Home,
   FileText,
   Settings,
-} from "lucide-react"
+} from "lucide-react" 
 import { PieChart, Pie, Cell, Legend, Tooltip, ResponsiveContainer } from "recharts"
 
 function App() {
@@ -21,10 +23,80 @@ function App() {
   const [activeReport, setActiveReport] = useState(null)
   const [activePage, setActivePage] = useState("dashboard")
   const [showForm, setShowForm] = useState(true)
-  const [showDetail, setShowDetail] = useState(true)
+  const [showDetail, setShowDetail] = useState(true)  
   const [searchQuery, setSearchQuery] = useState("")
   const [expandedRows, setExpandedRows] = useState({})
-  const [showSubmenu, setShowSubmenu] = useState(true)
+  const [startDate, setStartDate] = useState("")
+  const [endDate, setEndDate] = useState("")
+  const [rekapreports, setrekapreports] = useState([])
+  const [laporanExpanded, setLaporanExpanded] = useState(false)
+
+  const openReportFromSidebar = (index) => {
+    setActiveReport(index)                 // Set laporan aktif
+    setExpandedRows((prev) => ({ ...prev, [index]: true }))  // Expand form laporan
+    setActivePage("laporan")               // Pindah ke halaman laporan jika belum di halaman itu
+  }
+  
+  // Import banyak file excel untuk rekap gabungan langsung jadi Excel baru
+  const importMultipleExcel = async (files) => {
+    const allData = []
+    for (let file of files) {
+      const workbook = new ExcelJS.Workbook()
+      await workbook.xlsx.load(await file.arrayBuffer())
+      const worksheet = workbook.worksheets[0]
+
+      worksheet.eachRow((row, rowNumber) => {
+        if (rowNumber === 1) return // skip header
+        allData.push({
+          nama: row.getCell(1).value || "",
+          tanggal: row.getCell(2).value || "",
+          site: row.getCell(3).value || "",
+          agenda: row.getCell(4).value || "",
+          pekerjaan: row.getCell(5).value || "",
+          plan: row.getCell(6).value || "",
+          aktual: row.getCell(7).value || "",
+          status: row.getCell(8).value || "",
+          evidence: row.getCell(9).value
+            ? { name: row.getCell(9).value.toString(), url: "#" }
+            : null,
+        })
+      })
+    }
+
+    // Buat Excel baru hasil rekap gabungan
+    const newWorkbook = new ExcelJS.Workbook()
+    const newWorksheet = newWorkbook.addWorksheet("Rekap Gabungan")
+
+    newWorksheet.addRow([
+      "Nama","Tanggal","Site","Agenda","Pekerjaan","Plan","Aktual","Status","Evidence"
+    ])
+
+    allData.forEach((r) => {
+      newWorksheet.addRow([
+        r.nama, r.tanggal, r.site, r.agenda,
+        r.pekerjaan, r.plan, r.aktual, r.status,
+        r.evidence ? r.evidence.name : "",
+      ])
+    })
+
+    // Styling header
+    newWorksheet.getRow(1).eachCell((cell) => {
+      cell.font = { bold: true }
+      cell.alignment = { horizontal: "center", vertical: "middle" }
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFD9D9D9" } }
+      cell.border = { top: { style: "thin" }, left: { style: "thin" }, bottom: { style: "thin" }, right: { style: "thin" } }
+    })
+
+    // Lebar kolom
+    newWorksheet.columns = [
+      { width: 25 }, { width: 15 }, { width: 20 }, { width: 25 },
+      { width: 30 }, { width: 20 }, { width: 20 }, { width: 15 }, { width: 40 }
+    ]
+
+    // Export hasil langsung jadi file baru
+    const buf = await newWorkbook.xlsx.writeBuffer()
+    saveAs(new Blob([buf]), "Rekap-Gabungan.xlsx")
+  }
 
   const chartData = [
     { name: "Done", value: reports.filter((r) => r.status === "Done").length },
@@ -34,7 +106,8 @@ function App() {
   const COLORS = ["#4ade80", "#facc15", "#f87171"]
   const totalReports = reports.length
   const filledReports = reports.filter((r) => r.status !== "").length
-  const reportPercentage = totalReports === 0 ? 0 : Math.round((filledReports / totalReports) * 100)
+  const reportPercentage =
+    totalReports === 0 ? 0 : Math.round((filledReports / totalReports) * 100)
 
   const handleChange = (index, field, value) => {
     const newReports = [...reports]
@@ -90,6 +163,100 @@ function App() {
     setExpandedRows((prev) => ({ ...prev, [index]: !prev[index] }))
   }
 
+  // Import Excel Rekap
+  const importFromExcel = async (file) => {
+    const workbook = new ExcelJS.Workbook()
+    await workbook.xlsx.load(await file.arrayBuffer())
+    const worksheet = workbook.worksheets[0]
+
+    const newData = []
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber === 1) return
+      newData.push({
+        nama: row.getCell(1).value || "",
+        tanggal: row.getCell(2).value || "",
+        site: row.getCell(3).value || "",
+        agenda: row.getCell(4).value || "",
+        pekerjaan: row.getCell(5).value || "",
+        plan: row.getCell(6).value || "",
+        aktual: row.getCell(7).value || "",
+        status: row.getCell(8).value || "",
+        evidence: row.getCell(9).value
+          ? { name: row.getCell(9).value.toString(), url: "#" }
+          : null,
+      })
+    })
+
+    setReports([...reports, ...newData])
+  }
+
+  // Export hasil Rekap Gabungan
+  const exportRekapExcel = async () => {
+    if (rekapreports.length === 0) {
+      alert("Belum ada data rekap. Upload beberapa file excel terlebih dahulu.")
+      return
+    }
+
+    const workbook = new ExcelJS.Workbook()
+    const worksheet = workbook.addWorksheet("Rekap Gabungan")
+
+    worksheet.addRow([
+      "Nama","Tanggal","Site","Agenda","Pekerjaan","Plan","Aktual","Status","Evidence"
+    ])
+
+    rekapreports.forEach((r) => {
+      worksheet.addRow([
+        r.nama, r.tanggal, r.site, r.agenda,
+        r.pekerjaan, r.plan, r.aktual, r.status,
+        r.evidence ? r.evidence.name : "",
+      ])
+    })
+
+    const buf = await workbook.xlsx.writeBuffer()
+    saveAs(new Blob([buf]), "Hasil-Rekap-Laporan.xlsx")
+  }
+
+  // Export Rekap Excel (filter tanggal)
+  const exportFilteredExcel = async () => {
+    if (!startDate || !endDate) {
+      alert("Pilih rentang tanggal terlebih dahulu")
+      return
+    }
+
+    const filtered = reports.filter(
+      (r) => r.tanggal >= startDate && r.tanggal <= endDate
+    )
+
+    if (filtered.length === 0) {
+      alert("Tidak ada laporan pada rentang tanggal tersebut")
+      return
+    }
+
+    const workbook = new ExcelJS.Workbook()
+    const worksheet = workbook.addWorksheet("Rekap")
+
+    worksheet.addRow([
+      "Nama","Tanggal","Site","Agenda","Pekerjaan","Plan","Aktual","Status","Evidence",
+    ])
+
+    filtered.forEach((r) => {
+      const row = worksheet.addRow([
+        r.nama, r.tanggal, r.site, r.agenda,
+        r.pekerjaan, r.plan, r.aktual, r.status,
+        r.evidence ? r.evidence.name : "",
+      ])
+      if (r.evidence) {
+        const cell = row.getCell(10)
+        cell.value = { text: r.evidence.name, hyperlink: r.evidence.url }
+        cell.font = { color: { argb: "FF0000FF" }, underline: true }
+      }
+    })
+
+    const buf = await workbook.xlsx.writeBuffer()
+    saveAs(new Blob([buf]), `Rekap-Laporan-${startDate}-sd-${endDate}.xlsx`)
+  }
+
+  // Export Excel biasa
   const exportToExcel = async () => {
     for (let r of reports) {
       if (!r.nama || !r.tanggal || !r.agenda || !r.pekerjaan || !r.status || !r.site) {
@@ -101,27 +268,13 @@ function App() {
     const workbook = new ExcelJS.Workbook()
     const worksheet = workbook.addWorksheet("Laporan")
     worksheet.addRow([
-      "Nama",
-      "Tanggal",
-      "Site",
-      "Agenda",
-      "Pekerjaan",
-      "Plan",
-      "Aktual",
-      "Status",
-      "Evidence",
+      "Nama","Tanggal","Site","Agenda","Pekerjaan","Plan","Aktual","Status","Evidence",
     ])
 
     reports.forEach((r) => {
       const row = worksheet.addRow([
-        r.nama,
-        r.tanggal,
-        r.site,
-        r.agenda,
-        r.pekerjaan,
-        r.plan,
-        r.aktual,
-        r.status,
+        r.nama, r.tanggal, r.site, r.agenda,
+        r.pekerjaan, r.plan, r.aktual, r.status,
         r.evidence ? r.evidence.name : "",
       ])
       if (r.evidence) {
@@ -156,15 +309,9 @@ function App() {
     })
 
     worksheet.columns = [
-      { width: 30 },
-      { width: 20 },
-      { width: 20 },
-      { width: 25 },
-      { width: 30 },
-      { width: 20 },
-      { width: 20 },
-      { width: 15 },
-      { width: 40 },
+      { width: 30 },{ width: 20 },{ width: 20 },
+      { width: 25 },{ width: 30 },{ width: 20 },
+      { width: 20 },{ width: 15 },{ width: 40 },
     ]
 
     const buf = await workbook.xlsx.writeBuffer()
@@ -178,86 +325,117 @@ function App() {
   return (
     <div className={`${darkMode ? "dark" : ""} transition-colors duration-500`}>
       <div className="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white min-h-screen flex flex-col md:flex-row transition-colors duration-500">
+        
         {/* Sidebar */}
-                <aside className="w-full md:w-72 bg-gradient-to-br from-purple-600 via-pink-500 to-red-500 text-white p-6 shadow-xl rounded-tr-3xl rounded-br-3xl backdrop-blur-md bg-opacity-90 transition-colors duration-500">
-        <h2 className="text-2xl font-extrabold mb-10 leading-snug tracking-wide">
-          ALL TEAM <br />
-          <span className="text-sm font-medium opacity-90">Laporan Harian CV RANGGA</span>
-        </h2>
-        <ul className="space-y-3">
-          <li
-            className={`flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg transition-all duration-300 hover:bg-white/20 ${
-              activePage === "dashboard" ? "bg-white/30 font-bold" : ""
-            }`}
-            onClick={() => setActivePage("dashboard")}
-          >
-            <Home size={18} /> Dashboard
-          </li>
-          <li>
-            <div
+        <aside className="w-full md:w-72 bg-gradient-to-br from-purple-600 via-pink-500 to-red-500 text-white p-6 shadow-xl rounded-tr-3xl rounded-br-3xl backdrop-blur-md bg-opacity-90 transition-colors duration-500">
+          <h2 className="text-2xl font-extrabold mb-10 leading-snug tracking-wide">
+            ALL TEAM <br />
+            <span className="text-sm font-medium opacity-90">Laporan Harian CV RANGGA</span>
+          </h2>
+          <ul className="space-y-3">
+            <li
               className={`flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg transition-all duration-300 hover:bg-white/20 ${
-                activePage === "laporan" ? "bg-white/30 font-bold" : ""
+                activePage === "dashboard" ? "bg-white/30 font-bold" : ""
               }`}
-              onClick={() => setActivePage("laporan")}
+              onClick={() => setActivePage("dashboard")}
             >
-              <FileText size={18} /> Laporan
-            </div>
-            {activePage === "laporan" && (
-              <ul className="ml-6 mt-2 space-y-1 text-sm">
-                {reports.length === 0 ? (
-                  <li className="text-gray-200 italic">Belum ada laporan</li>
-                ) : (
-                  filteredReports.map((r, i) => (
-                    <li
-                      key={i}
-                      onClick={() => setActiveReport(i)}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer truncate transition-all duration-300 hover:bg-white/20 ${
-                        activeReport === i ? "bg-white/30 font-semibold" : ""
-                      }`}
-                      title={r.nama}
+              <Home size={18} /> Dashboard
+            </li>
+
+            {/* Laporan dengan Expand/Collapse */}
+            <li>
+              <div
+                className={`flex items-center justify-between cursor-pointer px-3 py-2 rounded-lg transition-all duration-300 hover:bg-white/20 ${
+                  activePage === "laporan" ? "bg-white/30 font-bold" : ""
+                }`}
+                onClick={() => {
+                  setActivePage("laporan")
+                  setLaporanExpanded(!laporanExpanded)
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  <FileText size={18} /> Laporan
+                </div>
+                {laporanExpanded ? <ChevronUp size={16}/> : <ChevronDown size={16}/>}
+              </div>
+              {/* Submenu laporan */}
+              <AnimatePresence>
+                {laporanExpanded && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="mt-3 space-y-2 pl-6"
+                  >
+                  {reports.length === 0 ? (
+                    <motion.p
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -10 }}
+                      transition={{ duration: 0.2 }}
+                      className="text-gray-400 italic"
                     >
-                      <FileSpreadsheet size={16} /> {r.nama || `Laporan ${i + 1}`}
-                    </li>
-                  ))
-                )}
-              </ul>
+                      Belum ada laporan
+                    </motion.p>
+                  ) : (
+                    <>
+                      {reports.map((r, index) => (
+                        <motion.p
+                          key={index}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -10 }}
+                          transition={{ duration: 0.2, delay: index * 0.05 }}
+                          className="text-sm dark:text-gray-200 cursor-pointer"
+                          onClick={() => openReportFromSidebar(index)}
+                        >
+                          • {r.nama || `Laporan ${index + 1}`}{" "}
+                          <span className="text-sm dark:text-gray-200">
+                            ({r.tanggal || "Belum ada tanggal"})
+                          </span>
+                        </motion.p>
+                      ))}
+                    </>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+            </li>
 
-            )}
-          </li>
-          <li
-            className={`flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg transition-all duration-300 hover:bg-white/20 ${
-              activePage === "pengaturan" ? "bg-white/30 font-bold" : ""
-            }`}
-            onClick={() => setActivePage("pengaturan")}
-          >
-            <Settings size={18} /> Pengaturan
-          </li>
-        </ul>
-      </aside>
-
+            <li
+              className={`flex items-center gap-2 cursor-pointer px-3 py-2 rounded-lg transition-all duration-300 hover:bg-white/20 ${
+                activePage === "pengaturan" ? "bg-white/30 font-bold" : ""
+              }`}
+              onClick={() => setActivePage("pengaturan")}
+            >
+              <Settings size={18} /> Pengaturan
+            </li>
+          </ul>
+        </aside>
 
         {/* Main Content */}
         <div className="flex-1 p-6 transition-colors duration-500">
+          
           {/* Navbar */}
-        <div className="flex justify-between items-center mb-6 bg-white dark:bg-gray-800 shadow rounded-2xl px-6 py-3 flex-wrap gap-4 transition-colors duration-500">
-          <h1 className="text-xl font-bold capitalize tracking-wide">📌 {activePage}</h1>
-          <div className="flex gap-3 flex-wrap items-center">
-            <input
-              type="text"
-              placeholder="🔍 Cari nama laporan..."
-              className="px-4 py-2 border rounded-lg w-56 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-400 transition-colors duration-500"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:scale-110 transition-transform shadow"
-            >
-              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
+          <div className="flex justify-between items-center mb-6 bg-white dark:bg-gray-800 shadow rounded-2xl px-6 py-3 flex-wrap gap-4 transition-colors duration-500">
+            <h1 className="text-xl font-bold capitalize tracking-wide">📌 {activePage}</h1>
+            <div className="flex gap-3 flex-wrap items-center">
+              <input
+                type="text"
+                placeholder="🔍 Cari nama laporan..."
+                className="px-4 py-2 border rounded-lg w-56 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-400 transition-colors duration-500"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <button
+                onClick={() => setDarkMode(!darkMode)}
+                className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:scale-110 transition-transform shadow"
+              >
+                {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
+            </div>
           </div>
-        </div>
-
 
           {/* Dashboard */}
           {activePage === "dashboard" && (
@@ -294,197 +472,260 @@ function App() {
             </div>
           )}
 
-          {/* Laporan Form */}
+          {/* Laporan */}
           {activePage === "laporan" && (
             <>
-              <div className="bg-white dark:bg-gray-800 shadow rounded-lg mb-6 transition-colors duration-500">
-                <button
-                  onClick={() => setShowForm(!showForm)}
-                  className="flex justify-between items-center w-full px-4 py-3 font-semibold border-b dark:border-gray-700 transition-colors duration-500"
-                >
-                  <span>📝 Form Laporan</span>
-                  {showForm ? <ChevronUp /> : <ChevronDown />}
-                </button>
+            {/* Form Laporan */}
+            <div className="flex flex-wrap gap-4 mb-4">
+
+              <button
+                onClick={addRow}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 shadow"
+              >
+                <Plus size={18} /> Tambah Laporan
+              </button>
+
+              {/* Export Excel */}
+              <button
+                onClick={exportToExcel}
+                className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 shadow"
+              >
+                <FileSpreadsheet size={18} /> Export Excel
+              </button>
+
+              {/* Import Excel Rekap */}
+              <label className="flex items-center gap-2 px-4 py-2 bg-yellow-500 text-white rounded-lg cursor-pointer hover:bg-yellow-600 shadow">
+                <FileSpreadsheet size={18} /> Import Excel
+                <input
+                  type="file"
+                  accept=".xlsx"
+                  onChange={(e) =>
+                    e.target.files[0] && importFromExcel(e.target.files[0])
+                  }
+                  className="hidden"
+                />
+              </label>
+
+              {/* Import Banyak Excel */}
+              <label className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg cursor-pointer hover:bg-orange-600 shadow">
+                <FileSpreadsheet size={18}/> Bikin Rekap Excel
+                <input
+                  type="file"
+                  accept=".xlsx"
+                  multiple
+                  onChange={(e) => e.target.files.length > 0 && importMultipleExcel(e.target.files)}
+                  className="hidden"
+                />
+              </label>
+            </div>
+              {/* Daftar laporan */}
+              {filteredReports.map((r, index) => (
                 <div
-                  className={`overflow-hidden transition-[max-height] duration-500`}
-                  style={{ maxHeight: showForm ? "2000px" : "0px" }}
+                  key={index}
+                  className="mb-4 border rounded-lg dark:border-gray-700 bg-gray-50 dark:bg-gray-700 transition-all duration-500"
+                ><div className="flex justify-between items-center p-4 bg-gray-200 dark:bg-gray-800 transition-all duration-500">
+              {/* Nama laporan (klik untuk expand) */}
+              <span
+                className="cursor-pointer flex-1"
+                onClick={() => toggleRow(index)}
+              >
+                {r.nama || `Laporan ${index + 1}`}
+              </span>
+
+              {/* Tombol kanan (expand + hapus) */}
+              <div className="flex items-center gap-2">
+                {/* Expand/Collapse */}
+                <button
+                  onClick={() => toggleRow(index)}
+                  className="p-1 hover:bg-gray-300 dark:hover:bg-gray-700 rounded transition"
                 >
-                  <div className="p-4">
-                    <div className="flex flex-wrap gap-4 mb-4">
-                      <button
-                        onClick={addRow}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 shadow"
-                      >
-                        <Plus size={18} /> Tambah Laporan
-                      </button>
-                      <button
-                        onClick={exportToExcel}
-                        className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 shadow"
-                      >
-                        <FileSpreadsheet size={18} /> Export Excel
-                      </button>
-                    </div>
+                  {expandedRows[index] ? <ChevronUp /> : <ChevronDown />}
+                </button>
 
-                    {filteredReports.map((r, index) => (
-                      <div
-                        key={index}
-                        className="mb-4 border rounded-lg dark:border-gray-700 bg-gray-50 dark:bg-gray-700 transition-colors duration-500"
-                      >
-                        {/* Header */}
-                        <div
-                          className="flex justify-between items-center p-4 cursor-pointer bg-gray-200 dark:bg-gray-800 transition-colors duration-500"
-                          onClick={() => toggleRow(index)}
+                {/* Tombol Hapus */}
+                <button
+                  onClick={() => deleteRow(index)}
+                  className="p-1 bg-red-500 text-white rounded hover:bg-red-600 transition"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            </div>
+                  <div
+                    className={`transition-all duration-500 ease-in-out overflow-hidden ${
+                      expandedRows[index] ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"
+                    }`}
+                  >
+                    <div
+                      className="p-4 grid grid-cols-2 gap-6"
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => handleDrop(index, e)}
+                    >
+                      <div>
+                        <label className="block mb-1">Nama</label>
+                        <input
+                          type="text"
+                          value={r.nama}
+                          onChange={(e) => handleChange(index, "nama", e.target.value)}
+                          className="w-full p-2 border rounded bg-white dark:bg-gray-800"
+                        />
+                        <label className="block mt-3 mb-1">Tanggal</label>
+                        <input
+                          type="date"
+                          value={r.tanggal}
+                          onChange={(e) => handleChange(index, "tanggal", e.target.value)}
+                          className="w-full p-2 border rounded bg-white dark:bg-gray-800"
+                        />
+                        <label className="block mt-3 mb-1">Site</label>
+                        <select
+                          value={r.site}
+                          onChange={(e) => handleChange(index, "site", e.target.value)}
+                          className="w-full p-2 border rounded bg-white dark:bg-gray-800"
                         >
-                          <span>{r.nama || `Laporan ${index + 1}`}</span>
-                          {expandedRows[index] ? <ChevronUp /> : <ChevronDown />}
+                          <option value="">Pilih Site</option>
+                          <option value="BMO I">BMO I</option>
+                          <option value="BMO II">BMO II</option>
+                          <option value="BMO III">BMO III</option>
+                          <option value="PMO">PMO</option>
+                          <option value="GMO">GMO</option>
+                          <option value="LMO">LMO</option>
+                          <option value="SMO">SMO</option>
+                          <option value="Office KDC">Office KDC</option>
+                          <option value="HO">HO</option>
+                          <option value="Mess CV. Rangga">Mess CV. Rangga</option>
+                          <option value="Area Tanjung">Area Tanjung</option>
+                          <option value="Mess Pama">Mess Pama</option>
+                        </select>
+                        <label className="block mt-3 mb-1">Agenda</label>
+                        <input
+                          type="text"
+                          value={r.agenda}
+                          onChange={(e) => handleChange(index, "agenda", e.target.value)}
+                          className="w-full p-2 border rounded bg-white dark:bg-gray-800"
+                        />
+                        <label className="block mt-3 mb-1">Pekerjaan</label>
+                        <input
+                          type="text"
+                          value={r.pekerjaan}
+                          onChange={(e) => handleChange(index, "pekerjaan", e.target.value)}
+                          className="w-full p-2 border rounded bg-white dark:bg-gray-800"
+                        />
+                      </div>
+                      <div>
+                        <label className="block mb-1">Plan</label>
+                        <input
+                          type="text"
+                          value={r.plan}
+                          onChange={(e) => handleChange(index, "plan", e.target.value)}
+                          className="w-full p-2 border rounded bg-white dark:bg-gray-800"
+                        />
+                        <label className="block mt-3 mb-1">Aktual</label>
+                        <input
+                          type="text"
+                          value={r.aktual}
+                          onChange={(e) => handleChange(index, "aktual", e.target.value)}
+                          className="w-full p-2 border rounded bg-white dark:bg-gray-800"
+                        />
+                        <label className="block mt-3 mb-1">Status</label>
+                        <select
+                          value={r.status}
+                          onChange={(e) => handleChange(index, "status", e.target.value)}
+                          className="w-full p-2 border rounded bg-white dark:bg-gray-800"
+                        >
+                          <option value="">Pilih</option>
+                          <option value="Done">Done</option>
+                          <option value="Progress">Progress</option>
+                          <option value="Pending">Pending</option>
+                        </select>
+                        <label className="block mt-3 mb-1">Evidence</label>
+                        <div className="flex items-center gap-2">
+                          <label className="cursor-pointer px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 shadow flex items-center gap-2 transition">
+                            <FileSpreadsheet size={16} /> Upload File
+                            <input
+                              type="file"
+                              accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                              onChange={(e) => handleFileChange(index, e.target.files[0])}
+                              className="hidden"
+                            />
+                          </label>
+                          {r.evidence && (
+                            <a
+                              href={r.evidence.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-blue-500 hover:underline truncate max-w-[200px]"
+                              title={r.evidence.name}
+                            >
+                              {r.evidence.name}
+                            </a>
+                          )}
                         </div>
-
-                        {/* Expandable Form */}
-                        <div
-                          className={`overflow-hidden transition-[max-height] duration-500`}
-                          style={{ maxHeight: expandedRows[index] ? "1000px" : "0px" }}
-                          onDragOver={(e) => e.preventDefault()}
-                          onDrop={(e) => handleDrop(index, e)}
-                        >
-                          <div className="p-4 grid grid-cols-2 gap-6">
-                            <div>
-                              <label className="block mb-1">Nama</label>
-                              <input
-                                type="text"
-                                value={r.nama}
-                                onChange={(e) => handleChange(index, "nama", e.target.value)}
-                                className="w-full p-2 border rounded bg-white dark:bg-gray-800 transition-colors duration-500"
-                              />
-
-                              <label className="block mt-3 mb-1">Tanggal</label>
-                              <input
-                                type="date"
-                                value={r.tanggal}
-                                onChange={(e) => handleChange(index, "tanggal", e.target.value)}
-                                className="w-full p-2 border rounded bg-white dark:bg-gray-800 transition-colors duration-500"
-                              />
-
-                              <label className="block mt-3 mb-1">Site</label>
-                              <select
-                                value={r.site}
-                                onChange={(e) => handleChange(index, "site", e.target.value)}
-                                className="w-full p-2 border rounded bg-white dark:bg-gray-800 transition-colors duration-500"
-                              >
-                                <option value="">Pilih Site</option>
-                                <option value="BMO I">BMO I</option>
-                                <option value="BMO II">BMO II</option>
-                                <option value="BMO III">BMO III</option>
-                                <option value="PMO">PMO</option>
-                                <option value="GMO">GMO</option>
-                                <option value="LMO">LMO</option>
-                                <option value="SMO">SMO</option>
-                                <option value="Office KDC">Office KDC</option>
-                                <option value="HO">HO</option>
-                                <option value="Mess CV. Rangga">Mess CV. Rangga</option>
-                                <option value="Area Tanjung">Area Tanjung</option>
-                                <option value="Mess Pama">Mess Pama</option>
-                              </select>
-
-                              <label className="block mt-3 mb-1">Agenda</label>
-                              <input
-                                type="text"
-                                value={r.agenda}
-                                onChange={(e) => handleChange(index, "agenda", e.target.value)}
-                                className="w-full p-2 border rounded bg-white dark:bg-gray-800 transition-colors duration-500"
-                              />
-
-                              <label className="block mt-3 mb-1">Pekerjaan</label>
-                              <input
-                                type="text"
-                                value={r.pekerjaan}
-                                onChange={(e) => handleChange(index, "pekerjaan", e.target.value)}
-                                className="w-full p-2 border rounded bg-white dark:bg-gray-800 transition-colors duration-500"
-                              />
-                            </div>
-
-                            <div>
-                              <label className="block mb-1">Plan</label>
-                              <input
-                                type="text"
-                                value={r.plan}
-                                onChange={(e) => handleChange(index, "plan", e.target.value)}
-                                className="w-full p-2 border rounded bg-white dark:bg-gray-800 transition-colors duration-500"
-                              />
-                              <label className="block mt-3 mb-1">Aktual</label>
-                              <input
-                                type="text"
-                                value={r.aktual}
-                                onChange={(e) => handleChange(index, "aktual", e.target.value)}
-                                className="w-full p-2 border rounded bg-white dark:bg-gray-800 transition-colors duration-500"
-                              />
-                              <label className="block mt-3 mb-1">Status</label>
-                              <select
-                                value={r.status}
-                                onChange={(e) => handleChange(index, "status", e.target.value)}
-                                className="w-full p-2 border rounded bg-white dark:bg-gray-800 transition-colors duration-500"
-                              >
-                                <option value="">Pilih</option>
-                                <option value="Done">Done</option>
-                                <option value="Progress">Progress</option>
-                                <option value="Pending">Pending</option>
-                              </select>
-
-                              <label className="block mt-3 mb-1">Evidence</label>
-                              <div className="flex items-center gap-2">
-                                <label className="cursor-pointer px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 shadow flex items-center gap-2 transition">
-                                  <FileSpreadsheet size={16} /> Upload File
-                                  <input
-                                    type="file"
-                                    accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                                    onChange={(e) => handleFileChange(index, e.target.files[0])}
-                                    className="hidden"
-                                  />
-                                </label>
-                                {r.evidence && (
-                                  <a
-                                    href={r.evidence.url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="text-blue-500 hover:underline truncate max-w-[200px]"
-                                    title={r.evidence.name}
-                                  >
-                                    {r.evidence.name}
-                                  </a>
-                                )}
-                              </div>
-
-                              <div className="text-right mt-2">
-                                <button
-                                  onClick={() => deleteRow(index)}
-                                  className="p-2 bg-red-500 text-white rounded hover:bg-red-600"
-                                >
-                                  <Trash2 size={16} />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
+                        <div className="text-right mt-2">
+                          <button
+                            onClick={() => deleteRow(index)}
+                            className="p-2 bg-red-500 text-white rounded hover:bg-red-600"
+                          >
+                            <Trash2 size={16} />
+                          </button>
                         </div>
                       </div>
-                    ))}
+                    </div>
                   </div>
                 </div>
-              </div>
+              ))}
+
+              {rekapreports.length > 0 && (
+                <div className="mt-6">
+                  <h2 className="text-lg font-bold mb-3">📊 Hasil Rekap Gabungan</h2>
+                  <table className="min-w-full border border-gray-300 dark:border-gray-700 rounded-lg overflow-hidden">
+                    <thead className="bg-gray-200 dark:bg-gray-700 text-sm uppercase">
+                      <tr>
+                        {["Nama","Tanggal","Site","Agenda","Pekerjaan","Plan","Aktual","Status","Evidence"].map((h,i)=>(
+                          <th key={i} className="px-4 py-3 text-center">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rekapreports.map((r,index)=>(
+                        <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-600 transition">
+                          <td className="px-4 py-2">{r.nama}</td>
+                          <td className="px-4 py-2">{r.tanggal}</td>
+                          <td className="px-4 py-2">{r.site}</td>
+                          <td className="px-4 py-2">{r.agenda}</td>
+                          <td className="px-4 py-2">{r.pekerjaan}</td>
+                          <td className="px-4 py-2">{r.plan}</td>
+                          <td className="px-4 py-2">{r.aktual}</td>
+                          <td className="px-4 py-2">{r.status}</td>
+                          <td className="px-4 py-2">{r.evidence?.name || "-"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <button
+                    onClick={exportRekapExcel}
+                    className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 shadow"
+                  >
+                    <FileSpreadsheet size={18}/> Export Hasil Rekap
+                  </button>
+                </div>
+              )}
 
               {/* Detail Laporan */}
               {activeReport !== null && reports[activeReport] && (
                 <div className="bg-white dark:bg-gray-800 shadow rounded-lg transition-colors duration-500">
                   <button
                     onClick={() => setShowDetail(!showDetail)}
-                    className="flex justify-between items-center w-full px-4 py-3 font-semibold border-b dark:border-gray-700 transition-colors duration-500"
+                    className="flex justify-between items-center w-full px-4 py-3 font-semibold border-b dark:border-gray-700"
                   >
                     <span>📄 Detail Laporan</span>
                     {showDetail ? <ChevronUp /> : <ChevronDown />}
                   </button>
                   <div
-                    className={`overflow-hidden transition-[max-height] duration-500`}
-                    style={{ maxHeight: showDetail ? "1000px" : "0px" }}
+                    className={`transition-all duration-500 ease-in-out overflow-hidden ${
+                      showDetail ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"
+                    }`}
                   >
-                    <div className="p-5 divide-y divide-gray-200 dark:divide-gray-700 transition-colors duration-500">
+                    <div className="p-5 divide-y divide-gray-200 dark:divide-gray-700">
                       {[
                         { label: "Nama", value: reports[activeReport].nama },
                         { label: "Tanggal", value: reports[activeReport].tanggal },
@@ -494,7 +735,12 @@ function App() {
                         { label: "Plan", value: reports[activeReport].plan },
                         { label: "Aktual", value: reports[activeReport].aktual },
                         { label: "Status", value: reports[activeReport].status },
-                        { label: "Evidence", value: reports[activeReport].evidence ? reports[activeReport].evidence.name : "-" },
+                        {
+                          label: "Evidence",
+                          value: reports[activeReport].evidence
+                            ? reports[activeReport].evidence.name
+                            : "-",
+                        },
                       ].map((item, i) => (
                         <div key={i} className="py-2 flex justify-between">
                           <span className="font-medium">{item.label}</span>
@@ -523,5 +769,4 @@ function App() {
     </div>
   )
 }
-
 export default App
