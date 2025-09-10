@@ -14,6 +14,7 @@ import {
   Home,
   FileText,
   Settings,
+  Search,
 } from "lucide-react" 
 import { PieChart, Pie, Cell, Legend, Tooltip, ResponsiveContainer } from "recharts"
 
@@ -115,15 +116,26 @@ function App() {
     setReports(newReports)
   }
 
-  const handleFileChange = (index, file) => {
+  const handleFileChange = async (index, file) => {
     if (file) {
-      const fileURL = URL.createObjectURL(file)
-      const newReports = [...reports]
-      newReports[index].evidence = { name: file.name, url: fileURL }
-      setReports(newReports)
-    }
-  }
+      const formData = new FormData();
+      formData.append("file", file);
 
+      try {
+        const res = await fetch("http://localhost:4000/upload", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await res.json();
+
+        const newReports = [...reports];
+        newReports[index].evidence = { name: data.name, url: data.url };
+        setReports(newReports);
+      } catch (error) {
+        console.error("Upload gagal:", error);
+      }
+    }
+  };
   const handleDrop = (index, e) => {
     e.preventDefault()
     const file = e.dataTransfer.files[0]
@@ -182,7 +194,10 @@ function App() {
         aktual: row.getCell(7).value || "",
         status: row.getCell(8).value || "",
         evidence: row.getCell(9).value
-          ? { name: row.getCell(9).value.toString(), url: "#" }
+          ? {
+              name: row.getCell(9).text || row.getCell(9).value.toString(),
+              url: row.getCell(9).hyperlink || "#",
+            }
           : null,
       })
     })
@@ -419,15 +434,36 @@ function App() {
           
           {/* Navbar */}
           <div className="flex justify-between items-center mb-6 bg-white dark:bg-gray-800 shadow rounded-2xl px-6 py-3 flex-wrap gap-4 transition-colors duration-500">
-            <h1 className="text-xl font-bold capitalize tracking-wide">📌 {activePage}</h1>
+            <h1 className="text-xl font-bold capitalize tracking-wide flex items-center gap-2">
+              {activePage === "dashboard" && (
+                <Home className="w-5 h-5 text-black dark:text-white opacity-60" />
+              )}
+              {activePage === "laporan" && (
+                <FileText className="w-5 h-5 text-black dark:text-white opacity-60" />
+              )}
+              {activePage === "pengaturan" && (
+                <Settings className="w-5 h-5 text-black dark:text-white opacity-60" />
+              )}
+              {activePage}
+            </h1>
             <div className="flex gap-3 flex-wrap items-center">
-              <input
+              <div className="relative">
+                <Search
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 
+                            text-gray-400 dark:text-gray-300 opacity-50 pointer-events-none"
+                />
+            <input
                 type="text"
-                placeholder="🔍 Cari nama laporan..."
-                className="px-4 py-2 border rounded-lg w-56 dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-400 transition-colors duration-500"
+                placeholder="Cari nama laporan..."
+                className="pl-10 pr-4 py-2 border rounded-lg w-56
+                          bg-white dark:bg-gray-700 
+                          text-gray-900 dark:text-white
+                          focus:ring-2 focus:ring-purple-400
+                          transition-colors duration-500"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+            </div>
               <button
                 onClick={() => setDarkMode(!darkMode)}
                 className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 hover:scale-110 transition-transform shadow"
@@ -522,158 +558,161 @@ function App() {
               {filteredReports.map((r, index) => (
                 <div
                   key={index}
-                  className="mb-4 border rounded-lg dark:border-gray-700 bg-gray-50 dark:bg-gray-700 transition-all duration-500"
-                ><div className="flex justify-between items-center p-4 bg-gray-200 dark:bg-gray-800 transition-all duration-500">
-              {/* Nama laporan (klik untuk expand) */}
-              <span
-                className="cursor-pointer flex-1"
-                onClick={() => toggleRow(index)}
-              >
-                {r.nama || `Laporan ${index + 1}`}
-              </span>
-
-              {/* Tombol kanan (expand + hapus) */}
-              <div className="flex items-center gap-2">
-                {/* Expand/Collapse */}
-                <button
-                  onClick={() => toggleRow(index)}
-                  className="p-1 hover:bg-gray-300 dark:hover:bg-gray-700 rounded transition"
+                  className="mb-4 border rounded-2xl dark:border-gray-700 bg-transparent shadow-lg transition-all duration-500"
                 >
-                  {expandedRows[index] ? <ChevronUp /> : <ChevronDown />}
-                </button>
+                  {/* Header: nama laporan + tombol expand & hapus */}
+                  <div className="flex justify-between items-center p-4 bg-gray-200 dark:bg-gray-800 rounded-2xl transition-all duration-500">
+                    {/* Nama laporan (klik untuk expand) */}
+                    <span
+                      className="cursor-pointer flex-1 font-semibold"
+                      onClick={() => toggleRow(index)}
+                    >
+                      {r.nama || `Laporan ${index + 1}`}
+                    </span>
 
-                {/* Tombol Hapus */}
-                <button
-                  onClick={() => deleteRow(index)}
-                  className="p-1 bg-red-500 text-white rounded hover:bg-red-600 transition"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            </div>
+                    {/* Tombol kanan (expand + hapus) */}
+                    <div className="flex items-center gap-2">
+                      {/* Expand/Collapse */}
+                      <button
+                        onClick={() => toggleRow(index)}
+                        className="p-1 hover:bg-gray-300 dark:hover:bg-gray-700 rounded-full transition"
+                        aria-label={`toggle-laporan-${index}`}
+                      >
+                        {expandedRows[index] ? <ChevronUp /> : <ChevronDown />}
+                      </button>
+                      {/* Tombol Hapus */}
+                      <button
+                        onClick={() => deleteRow(index)}
+                        className="p-2 bg-transparent text-red-500 rounded-full hover:text-red-600 transition"
+                        aria-label={`hapus-laporan-${index}`}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Expandable content (form laporan) - berada DI DALAM parent div */}
                   <div
                     className={`transition-all duration-500 ease-in-out overflow-hidden ${
                       expandedRows[index] ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"
                     }`}
                   >
-                    <div
-                      className="p-4 grid grid-cols-2 gap-6"
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => handleDrop(index, e)}
+                  <div className="p-4 grid grid-cols-2 gap-6" onDragOver={(e) => e.preventDefault()} onDrop={(e) => handleDrop(index, e)}>
+                  <div>
+                    <label className="block mb-1">Nama</label>
+                    <input
+                      type="text"
+                      value={r.nama}
+                      onChange={(e) => handleChange(index, "nama", e.target.value)}
+                      className="w-full p-2 border rounded bg-white dark:bg-gray-800"
+                    />
+
+                    <label className="block mt-3 mb-1">Tanggal</label>
+                    <input
+                      type="date"
+                      value={r.tanggal}
+                      onChange={(e) => handleChange(index, "tanggal", e.target.value)}
+                      className="w-full p-2 border rounded bg-white dark:bg-gray-800"
+                    />
+
+                    <label className="block mt-3 mb-1">Site</label>
+                    <select
+                      value={r.site}
+                      onChange={(e) => handleChange(index, "site", e.target.value)}
+                      className="w-full p-2 border rounded bg-white dark:bg-gray-800"
                     >
-                      <div>
-                        <label className="block mb-1">Nama</label>
+                      <option value="">Pilih Site</option>
+                      <option value="BMO I">BMO I</option>
+                      <option value="BMO II">BMO II</option>
+                      <option value="BMO III">BMO III</option>
+                      <option value="PMO">PMO</option>
+                      <option value="GMO">GMO</option>
+                      <option value="LMO">LMO</option>
+                      <option value="SMO">SMO</option>
+                      <option value="Office KDC">Office KDC</option>
+                      <option value="HO">HO</option>
+                      <option value="Mess CV. Rangga">Mess CV. Rangga</option>
+                      <option value="Area Tanjung">Area Tanjung</option>
+                      <option value="Mess Pama">Mess Pama</option>
+                    </select>
+
+                    <label className="block mt-3 mb-1">Agenda</label>
+                    <input
+                      type="text"
+                      value={r.agenda}
+                      onChange={(e) => handleChange(index, "agenda", e.target.value)}
+                      className="w-full p-2 border rounded bg-white dark:bg-gray-800"
+                    />
+
+                    {/* Evidence pindah ke kiri */}
+                    <label className="block mt-3 mb-1">Evidence</label>
+                    <div className="flex items-center gap-2">
+                      <label className="cursor-pointer px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 shadow flex items-center gap-2 transition">
+                        <FileSpreadsheet size={16} /> Upload File
                         <input
-                          type="text"
-                          value={r.nama}
-                          onChange={(e) => handleChange(index, "nama", e.target.value)}
-                          className="w-full p-2 border rounded bg-white dark:bg-gray-800"
+                          type="file"
+                          accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
+                          onChange={(e) => handleFileChange(index, e.target.files[0])}
+                          className="hidden"
                         />
-                        <label className="block mt-3 mb-1">Tanggal</label>
-                        <input
-                          type="date"
-                          value={r.tanggal}
-                          onChange={(e) => handleChange(index, "tanggal", e.target.value)}
-                          className="w-full p-2 border rounded bg-white dark:bg-gray-800"
-                        />
-                        <label className="block mt-3 mb-1">Site</label>
-                        <select
-                          value={r.site}
-                          onChange={(e) => handleChange(index, "site", e.target.value)}
-                          className="w-full p-2 border rounded bg-white dark:bg-gray-800"
+                      </label>
+                      {r.evidence && (
+                        <a
+                          href={r.evidence.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-blue-500 hover:underline truncate max-w-[200px]"
+                          title={r.evidence.name}
                         >
-                          <option value="">Pilih Site</option>
-                          <option value="BMO I">BMO I</option>
-                          <option value="BMO II">BMO II</option>
-                          <option value="BMO III">BMO III</option>
-                          <option value="PMO">PMO</option>
-                          <option value="GMO">GMO</option>
-                          <option value="LMO">LMO</option>
-                          <option value="SMO">SMO</option>
-                          <option value="Office KDC">Office KDC</option>
-                          <option value="HO">HO</option>
-                          <option value="Mess CV. Rangga">Mess CV. Rangga</option>
-                          <option value="Area Tanjung">Area Tanjung</option>
-                          <option value="Mess Pama">Mess Pama</option>
-                        </select>
-                        <label className="block mt-3 mb-1">Agenda</label>
-                        <input
-                          type="text"
-                          value={r.agenda}
-                          onChange={(e) => handleChange(index, "agenda", e.target.value)}
-                          className="w-full p-2 border rounded bg-white dark:bg-gray-800"
-                        />
-                        <label className="block mt-3 mb-1">Pekerjaan</label>
-                        <input
-                          type="text"
-                          value={r.pekerjaan}
-                          onChange={(e) => handleChange(index, "pekerjaan", e.target.value)}
-                          className="w-full p-2 border rounded bg-white dark:bg-gray-800"
-                        />
-                      </div>
-                      <div>
-                        <label className="block mb-1">Plan</label>
-                        <input
-                          type="text"
-                          value={r.plan}
-                          onChange={(e) => handleChange(index, "plan", e.target.value)}
-                          className="w-full p-2 border rounded bg-white dark:bg-gray-800"
-                        />
-                        <label className="block mt-3 mb-1">Aktual</label>
-                        <input
-                          type="text"
-                          value={r.aktual}
-                          onChange={(e) => handleChange(index, "aktual", e.target.value)}
-                          className="w-full p-2 border rounded bg-white dark:bg-gray-800"
-                        />
-                        <label className="block mt-3 mb-1">Status</label>
-                        <select
-                          value={r.status}
-                          onChange={(e) => handleChange(index, "status", e.target.value)}
-                          className="w-full p-2 border rounded bg-white dark:bg-gray-800"
-                        >
-                          <option value="">Pilih</option>
-                          <option value="Done">Done</option>
-                          <option value="Progress">Progress</option>
-                          <option value="Pending">Pending</option>
-                        </select>
-                        <label className="block mt-3 mb-1">Evidence</label>
-                        <div className="flex items-center gap-2">
-                          <label className="cursor-pointer px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 shadow flex items-center gap-2 transition">
-                            <FileSpreadsheet size={16} /> Upload File
-                            <input
-                              type="file"
-                              accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"
-                              onChange={(e) => handleFileChange(index, e.target.files[0])}
-                              className="hidden"
-                            />
-                          </label>
-                          {r.evidence && (
-                            <a
-                              href={r.evidence.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-blue-500 hover:underline truncate max-w-[200px]"
-                              title={r.evidence.name}
-                            >
-                              {r.evidence.name}
-                            </a>
-                          )}
-                        </div>
-                        <div className="text-right mt-2">
-                          <button
-                            onClick={() => deleteRow(index)}
-                            className="p-2 bg-red-500 text-white rounded hover:bg-red-600"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </div>
+                          {r.evidence.name}
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Kolom kanan */}
+                  <div>
+                    {/* Pekerjaan pindah ke kanan */}
+                    <label className="block mb-1">Pekerjaan</label>
+                    <input
+                      type="text"
+                      value={r.pekerjaan}
+                      onChange={(e) => handleChange(index, "pekerjaan", e.target.value)}
+                      className="w-full p-2 border rounded bg-white dark:bg-gray-800"
+                    />
+
+                    <label className="block mt-3 mb-1">Plan</label>
+                    <input
+                      type="text"
+                      value={r.plan}
+                      onChange={(e) => handleChange(index, "plan", e.target.value)}
+                      className="w-full p-2 border rounded bg-white dark:bg-gray-800"
+                    />
+
+                    <label className="block mt-3 mb-1">Aktual</label>
+                    <input
+                      type="text"
+                      value={r.aktual}
+                      onChange={(e) => handleChange(index, "aktual", e.target.value)}
+                      className="w-full p-2 border rounded bg-white dark:bg-gray-800"
+                    />
+
+                    <label className="block mt-3 mb-1">Status</label>
+                    <select
+                      value={r.status}
+                      onChange={(e) => handleChange(index, "status", e.target.value)}
+                      className="w-full p-2 border rounded bg-white dark:bg-gray-800"
+                    >
+                      <option value="">Pilih</option>
+                      <option value="Done">Done</option>
+                      <option value="Progress">Progress</option>
+                      <option value="Pending">Pending</option>
+                    </select>
                     </div>
                   </div>
                 </div>
+              </div>
               ))}
-
               {rekapreports.length > 0 && (
                 <div className="mt-6">
                   <h2 className="text-lg font-bold mb-3">📊 Hasil Rekap Gabungan</h2>
@@ -709,55 +748,84 @@ function App() {
                   </button>
                 </div>
               )}
-
               {/* Detail Laporan */}
               {activeReport !== null && reports[activeReport] && (
-                <div className="bg-white dark:bg-gray-800 shadow rounded-lg transition-colors duration-500">
+                <div className="mb-4 border rounded-2xl dark:border-gray-700 bg-transparent shadow-lg transition-all duration-500">
+                  {/* Header */}
                   <button
                     onClick={() => setShowDetail(!showDetail)}
-                    className="flex justify-between items-center w-full px-4 py-3 font-semibold border-b dark:border-gray-700"
+                    className="flex justify-between items-center w-full p-4 bg-gray-200 dark:bg-gray-800 rounded-t-2xl font-semibold transition"
                   >
                     <span>📄 Detail Laporan</span>
                     {showDetail ? <ChevronUp /> : <ChevronDown />}
                   </button>
+
+                  {/* Isi */}
                   <div
                     className={`transition-all duration-500 ease-in-out overflow-hidden ${
                       showDetail ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"
                     }`}
                   >
-                    <div className="p-5 divide-y divide-gray-200 dark:divide-gray-700">
-                      {[
-                        { label: "Nama", value: reports[activeReport].nama },
-                        { label: "Tanggal", value: reports[activeReport].tanggal },
-                        { label: "Site", value: reports[activeReport].site },
-                        { label: "Agenda", value: reports[activeReport].agenda },
-                        { label: "Pekerjaan", value: reports[activeReport].pekerjaan },
-                        { label: "Plan", value: reports[activeReport].plan },
-                        { label: "Aktual", value: reports[activeReport].aktual },
-                        { label: "Status", value: reports[activeReport].status },
-                        {
-                          label: "Evidence",
-                          value: reports[activeReport].evidence
-                            ? reports[activeReport].evidence.name
-                            : "-",
-                        },
-                      ].map((item, i) => (
-                        <div key={i} className="py-2 flex justify-between">
-                          <span className="font-medium">{item.label}</span>
-                          {item.label === "Evidence" && reports[activeReport].evidence ? (
-                            <a
-                              href={reports[activeReport].evidence.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-blue-500 hover:underline"
-                            >
-                              {reports[activeReport].evidence.name}
-                            </a>
-                          ) : (
-                            <span>{item.value}</span>
-                          )}
-                        </div>
-                      ))}
+                    <div className="p-4 grid grid-cols-2 gap-6">
+                      <div>
+                        <label className="block mb-1">Nama</label>
+                        <p className="w-full p-2 border rounded bg-white dark:bg-gray-800">
+                          {reports[activeReport].nama || "Belum diisi"}
+                        </p>
+
+                        <label className="block mt-3 mb-1">Tanggal</label>
+                        <p className="w-full p-2 border rounded bg-white dark:bg-gray-800">
+                          {reports[activeReport].tanggal || "Belum diisi"}
+                        </p>
+
+                        <label className="block mt-3 mb-1">Site</label>
+                        <p className="w-full p-2 border rounded bg-white dark:bg-gray-800">
+                          {reports[activeReport].site || "Belum diisi"}
+                        </p>
+
+                        <label className="block mt-3 mb-1">Agenda</label>
+                        <p className="w-full p-2 border rounded bg-white dark:bg-gray-800">
+                          {reports[activeReport].agenda || "Belum diisi"}
+                        </p>
+
+                        <label className="block mt-3 mb-1">Evidence</label>
+                        {reports[activeReport].evidence ? (
+                          <a
+                            href={reports[activeReport].evidence.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-block w-full p-2 border rounded bg-blue-500 text-white hover:bg-blue-600 text-center"
+                          >
+                            {reports[activeReport].evidence.name}
+                          </a>
+                        ) : (
+                          <p className="w-full p-2 border rounded bg-white dark:bg-gray-800">
+                            Belum diisi
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="block mb-1">Pekerjaan</label>
+                        <p className="w-full p-2 border rounded bg-white dark:bg-gray-800">
+                          {reports[activeReport].pekerjaan || "Belum diisi"}
+                        </p>
+
+                        <label className="block mt-3 mb-1">Plan</label>
+                        <p className="w-full p-2 border rounded bg-white dark:bg-gray-800">
+                          {reports[activeReport].plan || "Belum diisi"}
+                        </p>
+
+                        <label className="block mt-3 mb-1">Aktual</label>
+                        <p className="w-full p-2 border rounded bg-white dark:bg-gray-800">
+                          {reports[activeReport].aktual || "Belum diisi"}
+                        </p>
+
+                        <label className="block mt-3 mb-1">Status</label>
+                        <p className="w-full p-2 border rounded bg-white dark:bg-gray-800">
+                          {reports[activeReport].status || "Belum diisi"}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>

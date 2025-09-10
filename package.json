@@ -9,10 +9,13 @@
     "postinstall": "chmod +x node_modules/.bin/vite || true"
   },
   "dependencies": {
+    "cors": "^2.8.5",
     "exceljs": "^4.4.0",
+    "express": "^5.1.0",
     "file-saver": "^2.0.5",
     "framer-motion": "^11.18.2",
     "lucide-react": "^0.446.0",
+    "multer": "^2.0.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "recharts": "^3.1.2",
@@ -24,5 +27,19 @@
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
     "vite": "^7.1.4"
-  }
+  },
+  "description": "��#\u0000 \u0000L\u0000a\u0000p\u0000o\u0000r\u0000a\u0000n\u0000-\u0000D\u0000M\u0000S\u0000\r\u0000 \u0000",
+  "main": "postcss.config.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/biawakbatam48-sketch/Laporan-DMS.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/biawakbatam48-sketch/Laporan-DMS/issues"
+  },
+  "homepage": "https://github.com/biawakbatam48-sketch/Laporan-DMS#readme"
 }
