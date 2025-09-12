@@ -14,20 +14,26 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 // Simpan file di folder "uploads"
-const storage = multer.diskStorage({
-  destination: uploadDir,
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + "-" + file.originalname);
-  },
-});
-const upload = multer({ storage });
-
+  const upload = multer({ 
+    storage,
+    fileFilter: (req, file, cb) => {
+      const allowedTypes = /jpeg|jpg|png/;
+      const ext = path.extname(file.originalname).toLowerCase();
+      const mime = allowedTypes.test(file.mimetype);
+      const validExt = allowedTypes.test(ext);
+      if (mime && validExt) {
+        cb(null, true);  // file diterima
+      } else {
+        cb(new Error("Hanya file gambar (.png, .jpg, .jpeg) yang diperbolehkan")); // tolak file lain
+      }
+    }
+  });
 // ------------------- ROUTE ------------------- //
 
 // Root route untuk test
 app.get("/", (req, res) => {
   res.send("🚀 Backend is running! Use /upload or /files");
-});
+});   
 
 // Endpoint upload
 app.post("/upload", upload.single("file"), (req, res) => {
@@ -64,6 +70,6 @@ app.use("/uploads", express.static(uploadDir));
 
 // Jalankan server
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-  console.log(`🚀 Backend running at http://localhost:${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Backend running at http://0.0.0.0:${PORT}`);
 });

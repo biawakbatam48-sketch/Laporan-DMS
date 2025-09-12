@@ -116,31 +116,42 @@ function App() {
     setReports(newReports)
   }
 
-  const handleFileChange = async (index, file) => {
-    if (file) {
-      const formData = new FormData();
-      formData.append("file", file);
+const handleFileChange = async (index, file) => {
+  if (!file) return;
 
-      try {
-        const res = await fetch("http://119.2.43.161/upload", {
-          method: "POST",
-          body: formData,
-        });
-        const data = await res.json();
+  const formData = new FormData();
+  formData.append("file", file);
 
-        const newReports = [...reports];
-        newReports[index].evidence = { name: data.name, url: data.url };
-        setReports(newReports);
-      } catch (error) {
-        console.error("Upload gagal:", error);
+    try {
+      const res = await fetch("http://119.2.43.161/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const err = await res.text();
+        throw new Error(err);
       }
+
+      const data = await res.json();
+
+      // Hanya simpan jika file gambar
+      if (!data.name.match(/\.(png|jpg|jpeg)$/i)) {
+        alert("File yang diupload harus berupa gambar (.png/.jpg/.jpeg)");
+        return;
+      }
+
+      const newReports = [...reports];
+      newReports[index].evidence = {
+        name: data.name,
+        url: data.url,  // URL sudah bisa diakses via Nginx
+      };
+      setReports(newReports);
+    } catch (error) {
+      console.error("Upload gagal:", error);
+      alert(error.message);
     }
   };
-  const handleDrop = (index, e) => {
-    e.preventDefault()
-    const file = e.dataTransfer.files[0]
-    if (file) handleFileChange(index, file)
-  }
 
   const addRow = () => {
     setReports([
