@@ -122,7 +122,7 @@ function App() {
       formData.append("file", file);
 
       try {
-        const res = await fetch("http://localhost:4000/upload", {
+        const res = await fetch("http://119.2.43.161/upload", {
           method: "POST",
           body: formData,
         });
